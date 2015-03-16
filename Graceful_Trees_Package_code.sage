@@ -455,7 +455,7 @@ def PlotGracefulGraphsII(n):
                     Graph(List2Adj(c[t])).plot().save(str(p).replace(', ','_').replace('[','').replace(']','')+'__'+str(t)+'.png')
 
 
-def GracefulGraphsAdjacencyMatrices(n):
+def GracefulAdjacencyMatrices(n):
     L = []
     for p in Permutations(n-1):
         for q in Permutations(n-1):

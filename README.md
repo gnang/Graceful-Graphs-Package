@@ -32,7 +32,7 @@ given by the name of the file.
 If instead we wanted a list of adjacency matrices for the graphs we ould use the following command
 
 ```python
-sage: GracefulGraphsAdjacencyMatrices(4)
+sage: GracefulAdjacencyMatrices(4)
 [
 [0 1 1 1]  [0 0 1 1]  [0 0 0 1]  [0 0 0 1]  [0 1 1 1]  [0 0 1 1]
 [1 0 0 0]  [0 0 1 0]  [0 0 1 1]  [0 0 0 1]  [1 0 0 0]  [0 0 0 1]
