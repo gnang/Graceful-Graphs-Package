@@ -1,5 +1,5 @@
 =======
-# Arithmetic-Formulas-Encoding-Package
+# Graceful Graph Package
 
 We provide here a sagemath implementation of the Integer formula encoding package
 **UPDATE 2015-03-16** 
