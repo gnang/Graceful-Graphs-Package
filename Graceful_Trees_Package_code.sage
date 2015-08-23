@@ -657,7 +657,6 @@ def PlotGracefulGraphsII(n):
                 for t in range(len(c)):
                     Graph(List2Adj(c[t])).plot().save(str(p).replace(', ','_').replace('[','').replace(']','')+'__'+str(t)+'.png')
 
-
 def GracefulAdjacencyMatrices(n):
     """
     Returns a list of adjacency matrices associated with graceful graphs.
@@ -670,22 +669,22 @@ def GracefulAdjacencyMatrices(n):
         [[
         [0 1 1]                
         [1 0 0]                
-        [1 0 0], [0, 0], [1, 2]
+        [1 0 0], [1, 2], [0, 0]
         ],
         [
         [0 0 1]                
         [0 0 1]                
-        [1 1 0], [2, 0], [1, 2]
+        [1 1 0], [1, 2], [2, 0]
         ],
         [
         [0 1 1]                
         [1 0 0]                
-        [1 0 0], [0, 0], [2, 1]
+        [1 0 0], [2, 1], [0, 0]
         ],
         [
         [0 1 0]                
         [1 0 1]                
-        [0 1 0], [0, 1], [2, 1]
+        [0 1 0], [2, 1], [0, 1]
         ]]
 
     AUTHORS:
@@ -742,7 +741,7 @@ def GracefulAdjacencyMatrices(n):
                                 d[i] = d[i]+[pinv[p[j]+q[j]-1]+1]
                             c = c+d
                 for t in range(len(c)):
-                    L.append([List2Adj(c[t]), c[t], p])
+                    L.append([List2Adj(c[t]), p, c[t]])
     return L 
 
 def GracefulTreeAdjacencyMatrices(n):
@@ -755,12 +754,12 @@ def GracefulTreeAdjacencyMatrices(n):
         [[
         [0 1 1]                
         [1 0 0]                
-        [1 0 0], [0, 0], [1, 2]
+        [1 0 0], [1, 2], [0, 0]
         ],
         [
         [0 0 1]                
         [0 0 1]                
-        [1 1 0], [2, 0], [1, 2]
+        [1 1 0], [1, 2], [2, 0]
         ]]
     AUTHORS:
     - Edinah K. Gnang
@@ -817,5 +816,5 @@ def GracefulTreeAdjacencyMatrices(n):
             for t in range(len(c)):
                 # Testing Treenes
                 if is_Tree(List2Adj(c[t])): 
-                    L.append([List2Adj(c[t]), c[t], p])
+                    L.append([List2Adj(c[t]), p, c[t]])
     return L 
