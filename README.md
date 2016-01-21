@@ -20,42 +20,30 @@ sage: %runfile("Graceful_Trees_Package_code.sage")
 
 # Usage
 
-To create all connected graphs on n vertices which admit a graceful labeling we use
-the following commands 
+The following goes through all the permutation of n>1 elements and outputs
+the list of permutations which can be used for constructing
+graceful graphs with all the vertices have degree>0.
 
 ```python
-sage: PlotGracefulGraphs(4)
+sage: GracefulPermutations(4)
+[[1, 2, 3], [2, 1, 3]]
 ```
-The computation produces in the working directory png files depiciting the graphs obtain which
-admit a graceful labeling. The permutation of the vertices which yield the graceful labeling is
-given by the name of the file.
-If instead we wanted a list of adjacency matrices for the graphs we ould use the following command
+
+The following goes through all the permutation of n>1 elements and outputs
+the list of of functions derived from graceful permutations.
 
 ```python
-sage: GracefulAdjacencyMatrices(4)
-[
-[0 1 1 1]  [0 0 1 1]  [0 0 0 1]  [0 0 0 1]  [0 1 1 1]  [0 0 1 1]
-[1 0 0 0]  [0 0 1 0]  [0 0 1 1]  [0 0 0 1]  [1 0 0 0]  [0 0 0 1]
-[1 0 0 0]  [1 1 0 0]  [0 1 0 0]  [0 0 0 1]  [1 0 0 0]  [1 0 0 0]
-[1 0 0 0], [1 0 0 0], [1 1 0 0], [1 1 1 0], [1 0 0 0], [1 1 0 0],
-
-[0 0 1 0]  [0 0 1 0]  [0 0 0 1]  [0 0 0 1]  [0 1 1 1]  [0 1 0 1]
-[0 0 1 1]  [0 0 1 0]  [0 0 1 0]  [0 0 0 1]  [1 0 0 0]  [1 0 1 0]
-[1 1 0 0]  [1 1 0 1]  [0 1 0 1]  [0 0 0 1]  [1 0 0 0]  [0 1 0 0]
-[0 1 0 0], [0 0 1 0], [1 0 1 0], [1 1 1 0], [1 0 0 0], [1 0 0 0],
-
-[0 0 1 0]  [0 0 1 0]  [0 1 1 1]  [0 1 1 0]  [0 1 1 1]  [0 1 0 1]
-[0 0 0 1]  [0 0 1 0]  [1 0 0 0]  [1 0 0 1]  [1 0 0 0]  [1 0 0 0]
-[1 0 0 1]  [1 1 0 1]  [1 0 0 0]  [1 0 0 0]  [1 0 0 0]  [0 0 0 1]
-[0 1 1 0], [0 0 1 0], [1 0 0 0], [0 1 0 0], [1 0 0 0], [1 0 1 0],
-
-[0 1 0 0]  [0 1 0 0]  [0 1 0 0]  [0 1 0 0]  [0 1 1 1]  [0 1 1 0]
-[1 0 1 0]  [1 0 1 1]  [1 0 0 1]  [1 0 1 1]  [1 0 0 0]  [1 0 0 0]
-[0 1 0 1]  [0 1 0 0]  [0 0 0 1]  [0 1 0 0]  [1 0 0 0]  [1 0 0 1]
-[0 0 1 0], [0 1 0 0], [0 1 1 0], [0 1 0 0], [1 0 0 0], [0 0 1 0]
-]
+sage: CountGracefulFunctions(4)
+[[2, [1, 2, 3]], [2, [2, 1, 3]]]
+```
+The following goes through all the permutation of n>1 elements and outputs
+the list of of functions on the vertices derived from graceful permutations.
+```python
+sage: GracefulFunctions(3)
+[[[[0, 0], [2, 0]], [1, 2]]]
 ```
 
+(to be continued ...)
 
 # Bug report
 
