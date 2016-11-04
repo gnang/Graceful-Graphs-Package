@@ -66,6 +66,12 @@ def CountGracefulFunctions(n):
 
         sage: CountGracefulFunctions(4)
         [[2, [0, 1, 2, 3]], [2, [0, 2, 1, 3]]]
+        sage: TpL=CountGracefulFunctions(5)
+        sage: for l in TpL:
+        ....:     L.append(l[0])
+        ....:
+        sage: L
+        [4, 2, 2, 4]
 
 
     AUTHORS:
@@ -82,6 +88,80 @@ def CountGracefulFunctions(n):
             if p[i] < n-i and p[i] <= i:
                 c=2*c
         L.append([c, p])
+    return L
+
+def CountGracefulTrees(n):
+    """
+    Goes through all the permutation of n > 1 elements and enumerates 
+    graceful trees on the vertices derived from graceful permutations.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: CountGracefulTrees(4)
+        [[2, [0, 1, 2, 3]], [2, [0, 2, 1, 3]]]
+        sage: TpL=CountGracefulTrees(5)
+        sage: for l in TpL:
+        ....:     L.append(l[0])
+        ....:
+        sage: L
+        [4, 2, 2, 4]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the identity matrix
+    Id=identity_matrix(n)
+    # Initialization of the list collecting graceful permutations.
+    L=[]
+    # Loop going through the graceful permutations.
+    for p in GracefulPermutations(n):
+        # Initialization of the list of functions.
+        c=[]
+        for j in range(n):
+            if j == 0:
+                if len(c)==0:
+                    c.append([(j, p[j])])
+                else:
+                    for i in range(len(c)):
+                        c[i]=c[i]+[(j, p[j])]
+            # testing that only the first criteria is met
+            elif (j > 0) and (p[j] < n-j) and not (j >= p[j]):
+                if len(c)==0:
+                    c.append([(j, j+p[j])])
+                else:
+                    for i in range(len(c)):
+                        c[i]=c[i]+[(j, j+p[j])]
+            # testing that only the second criteria is met
+            elif (j > 0) and not (p[j] < n-j) and (j >= p[j]):
+                if len(c)==0:
+                    c.append([(j, j-p[j])])
+                else:
+                    for i in range(len(c)):
+                        c[i]=c[i]+[(j, j-p[j])]
+            # testing that all two criterias are met
+            elif (j > 0) and (p[j] < n-j) and (j >= p[j]):
+                if len(c)==0:
+                    c.append([(j, j+p[j])])
+                    c.append([(j, j-p[j])])
+                else:
+                    d=copy(c)
+                    for i in range(len(c)):
+                        c[i]=c[i]+[(j, j+p[j])]
+                    for i in range(len(d)):
+                        d[i]=d[i]+[(j, j-p[j])]
+                    c=c+d
+        # Initializing the list which will store the generators
+        g = 0
+        for il in c:
+            # Initilization of the adjacency matrix
+            if is_Tree( sum([Id[:,t[0]]*Id[t[1],:]+Id[:,t[1]]*Id[t[0],:] for t in il]) ):
+                g = g + 1
+        L.append([g, p])
     return L
 
 @cached_function
@@ -342,6 +422,41 @@ def GraphSignedPermutationOrbitsT(T):
             cL.append(SP2T(s))
     return cL
 
+def GraphSignedPermutationOrbitsTII(T):
+    """
+    Obtain the orbits of signed function defined by
+    the isomorphism classes of associated directed graph.
+    The tree isomorphism function is doing the heavy 
+    lifting here. The functions takes as input a tuple
+    edge list. The difference with the implementation
+    above is the fact that the graph is treated as a
+    directed graph when checking for isomorphism
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: GraphSignedPermutationOrbitsTII([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)])
+        [[(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)],
+         [(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)]]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of permutations
+    L=SignedPermutations(len(T))
+    # Initialization of the list storing the equivalence class of trees.
+    cL=[]
+    # Loop perfomring the isomorphism binning.
+    for s in L:
+        nwT=True
+        if T2DiGraph(SP2T(s)).is_isomorphic(T2DiGraph(T)) and not s in cL:
+            cL.append(SP2T(s))
+    return cL
+
 def GraphSignedPermutationOrbitsSP(sigma):
     """
     Obtain the orbits of signed function defined by
@@ -369,6 +484,39 @@ def GraphSignedPermutationOrbitsSP(sigma):
     # Loop perfomring the isomorphism binning.
     for s in L:
         if SP2Graph(s).is_isomorphic(SP2Graph(sigma)) and not s in cL:
+            cL.append(s)
+    return cL
+
+def GraphSignedPermutationOrbitsSPII(sigma):
+    """
+    Obtain the orbits of signed function defined by
+    the isomorphism classes of associated drected graph.
+    The tree isomorphism function is doing the heavy 
+    lifting here.The functions takes as input a signed
+    permutation. The difference with the previous 
+    implementation is that the graphs here are directed
+    and rooted
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: GraphSignedPermutationOrbitsSPII([0, -1, -2, -3])
+        [[0, -1, -2, -3]]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of permutations
+    L=SignedPermutations(len(sigma))
+    # Initialization of the list storing the equivalence class of trees.
+    cL=[]
+    # Loop perfomring the isomorphism binning.
+    for s in L:
+        if T2DiGraph(SP2T(s)).is_isomorphic(T2DiGraph(SP2T(sigma))) and not s in cL:
             cL.append(s)
     return cL
 
@@ -443,6 +591,96 @@ def GracefulFunctionsTuples(n):
         L.append([c,p])
     return L
 
+@cached_function
+def HiddenGracefulFunctionsTuples(n):
+    """
+    Goes through all permutations of n > 1 elements and outputs the
+    list of directed edges as pairs of vertices derived from graceful
+    permutations. The graceful labeling is hidden by the action of
+    elements of the symmetric group on the vertices.
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: HiddenGracefulFunctionsTuples(3)
+        [[[[(0, 0), (1, 2), (2, 0)], [(0, 0), (1, 0), (2, 0)]], [0, 1, 2], [0, 1, 2]],
+         [[[(0, 0), (2, 1), (1, 0)], [(0, 0), (2, 0), (1, 0)]], [0, 1, 2], [0, 2, 1]],
+         [[[(1, 1), (0, 2), (2, 1)], [(1, 1), (0, 1), (2, 1)]], [0, 1, 2], [1, 0, 2]],
+         [[[(1, 1), (2, 0), (0, 1)], [(1, 1), (2, 1), (0, 1)]], [0, 1, 2], [1, 2, 0]],
+         [[[(2, 2), (0, 1), (1, 2)], [(2, 2), (0, 2), (1, 2)]], [0, 1, 2], [2, 0, 1]],
+         [[[(2, 2), (1, 0), (0, 2)], [(2, 2), (1, 2), (0, 2)]], [0, 1, 2], [2, 1, 0]]]
+        sage: L=[]
+        sage: TpL=HiddenGracefulFunctionsTuples(3)
+        sage: for l in TpL:
+        ....:     L=L+l[0]
+        ....:
+        sage: L
+        [[(0, 0), (1, 0), (2, 0)],
+         [(0, 0), (1, 2), (2, 0)],
+         [(0, 0), (2, 0), (1, 0)],
+         [(0, 0), (2, 1), (1, 0)],
+         [(1, 1), (0, 1), (2, 1)],
+         [(1, 1), (0, 2), (2, 1)],
+         [(1, 1), (2, 0), (0, 1)],
+         [(1, 1), (2, 1), (0, 1)],
+         [(2, 2), (0, 1), (1, 2)],
+         [(2, 2), (0, 2), (1, 2)],
+         [(2, 2), (1, 0), (0, 2)],
+         [(2, 2), (1, 2), (0, 2)]]
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initializing the list of graceful permutations
+    GpL=GracefulPermutations(n)
+    # Intialization of the list collecting the graceful permutations.
+    L=[]
+    for qm in Permutations(n):
+        # fixing up the permutation
+        q=[qm[i]-1 for i in range(n)]
+        # Loop going through the list of graceful permutations.
+        for p in GpL:
+            # Initialization of the list of functions.
+            c=[]
+            for j in range(n):
+                if j == 0:
+                    if len(c)==0:
+                        c.append([(q[j], q[p[j]])])
+                    else:
+                        for i in range(len(c)):
+                            c[i]=c[i]+[(q[j], q[p[j]])]
+                # Testing that only the first criteria is met.
+                elif (j > 0) and (p[j] < n-j) and not (j >= p[j]):
+                    if len(c) == 0:
+                        c.append([(q[j], q[j+p[j]])])
+                    else:
+                        for i in range(len(c)):
+                            c[i]=c[i]+[(q[j], q[j+p[j]])]
+                # Testing that only the second criteria is met.
+                elif (j > 0) and not (p[j] < n-j) and (j >= p[j]):
+                    if len(c)==0:
+                        c.append([(q[j], q[j-p[j]])])
+                    else:
+                        for i in range(len(c)):
+                            c[i]=c[i]+[(q[j], q[j-p[j]])]
+                # Testing that all two criterias are met
+                elif (j > 0) and (p[j] < n-j) and (j >= p[j]):
+                    if len(c)==0:
+                        c.append([(q[j], q[j+p[j]])])
+                        c.append([(q[j], q[j-p[j]])])
+                    else:
+                        d=copy(c)
+                        for i in range(len(c)):
+                            c[i]=c[i]+[(q[j], q[j+p[j]])]
+                        for i in range(len(d)):
+                            d[i]=d[i]+[(q[j], q[j-p[j]])]
+                        c=c+d
+            L.append([c,p,q])
+    return L
+
+
 def GracefulPolynomialList(n, x):
     """
     Goes through graceful tuple list and produce a list of
@@ -492,6 +730,27 @@ def Tuple2EdgeList(Lt, c):
     """
     # returning of the list
     return [var(c+str(t[0]))-var(c+str(t[1])) for t in Lt]
+
+def Tuple2EdgeListII(Lt, c):
+    """
+    Goes through graceful tuple list and produces a list of
+    polynomials in the variables x associated with the tree.
+    
+
+    EXAMPLES:
+    ::
+
+
+        sage: Tuple2EdgeList([(0, 0), (1, 2), (2, 0)], 'x')
+        [1, x1/x2, x2/x0]    
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # returning of the list
+    return [1]+[var(c+str(t[0]))*var(c+str(t[1])) for t in Lt[1:]]
+
 
 def SP2T(sp):
     """
@@ -1036,6 +1295,34 @@ def GraphSignedPermutationClasses(n):
             cL.append([s])
     return cL
 
+def GracefulGraphPermutationClasses(sz):
+    """
+    Obtain the equivalence classes of permutation graphs 
+    defined by the isomorphism classes of associated trees.
+    The tree isomorphism function is doing the heavy lifting here.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: GracefulGraphPermutationClasses(4)
+        [[[0, 1, 2, 3], [0, 2, 1, 3]], [[0, 1, 2, 3], [0, 2, 1, 3]]]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of signed permutations
+    L=GraphSignedPermutationClasses(sz)
+    # Obtaining the graceful permutation orbit
+    RsLt=[]
+    for l in L:
+        Tmp=Set([sum(abs(sigma[i])*x^i for i in range(sz)) for sigma in l]).list()
+        RsLt.append([[f.subs(x=0)]+[f.coefficient(x^i) for i in range(1,sz)] for f in Tmp])
+    return RsLt
+
 def GraphSignedPermutationClassesII(n):
     """
     Obtain the equivalence classes of signed function defined by
@@ -1107,6 +1394,34 @@ def TreeSignedPermutationClasses(n):
         if nwT==True:
             cL.append([s])
     return cL
+
+def GracefulTreePermutationClasses(sz):
+    """
+    Obtain the equivalence classes of permutation graphs 
+    defined by the isomorphism classes of associated trees.
+    The tree isomorphism function is doing the heavy lifting here.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: GracefulTreePermutationClasses(4)
+        [[[0, 1, 2, 3], [0, 2, 1, 3]], [[0, 1, 2, 3], [0, 2, 1, 3]]]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of signed permutations
+    L=TreeSignedPermutationClasses(sz)
+    # Obtaining the graceful permutation orbit
+    RsLt=[]
+    for l in L:
+        Tmp=Set([sum(abs(sigma[i])*x^i for i in range(sz)) for sigma in l]).list()
+        RsLt.append([[f.subs(x=0)]+[f.coefficient(x^i) for i in range(1,sz)] for f in Tmp])
+    return RsLt
 
 def TreeSignedPermutationClassesII(n):
     """
@@ -1327,8 +1642,8 @@ def NodeSplittingSignedPermutationClassesII(nbv):
 def GracefulNonTreeFunctionsTuples(n):
     """
     Goes through all the permutation of n > 1 elements and outputs
-    the list of graceful functions on the vertices 
-    derived from graceful permutations.
+    the list of graceful functions on the vertices derived from 
+    graceful permutations.
 
 
     EXAMPLES:
@@ -2692,7 +3007,7 @@ def generate_labeling_script(T):
     f.write(sp+"                    for i in range(len(d)):\n")
     f.write(sp+"                        d[i]=d[i]+[(j, j-p[j])]\n")
     f.write(sp+"                    c=c+d\n")
-    f.write(sp+"        # Initializing the list which will store the generators\n")
+    f.write(sp+"        # Initializing the list which will store the trees\n")
     f.write(sp+"        TmpRsLt=[]\n")
     f.write(sp+"        for t in c:\n")
     f.write(sp+"            if T2Graph(t).is_isomorphic(T2Graph(T)):\n")
@@ -2826,4 +3141,288 @@ def generate_labeling_scriptII(T):
     f.write(sp+"                return t\n")
     # Closing the file
     f.close()
+
+def generate_script_fast_partial_graceful_list(sz):
+    """
+    The produces an implementation an optimal sage script for
+    displaying and listing partial gracefully labled graph on
+    sz vertices, sz must be greater than 4. Make sure to include the
+    Hypermatrix Package in the working directory
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: !touch fast_listing_of_partial_graceful_trees_on_10_vertices.sage
+        sage: !rm fast_listing_of_partial_graceful_trees_on_10_vertices.sage
+        sage: generate_script_fast_partial_graceful_list(10)
+        sage: !ls fast_listing_of_partial_graceful_trees_on_10_vertices.sage
+        fast_listing_of_partial_graceful_trees_on_10_vertices.sage
+        
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Creating the string corresponding to the file name
+    filename = 'fast_listing_of_partial_graceful_trees_on_'+str(sz)+'_vertices.sage'
+    # Opening the file
+    f = open(filename,'w')
+    f.write('# Loading the Hypermatrix Package\n')
+    f.write("load('./Hypermatrix_Algebra_tst.sage')\n\n")
+    f.write('# Loading the Graceful Graph Package\n')
+    f.write("load('./graceful_graph_package.sage')\n\n")
+    f.write('# Initialization of the size parameter\n')
+    f.write('sz='+str(sz)+'\n\n')
+    f.write('# Initialization of the identity matrix\n')
+    f.write('Id=identity_matrix(sz)\n\n')
+    f.write('# List storing the result\n')
+    f.write('RsLt=[]; tc=0\n\n')
+    f.write('# Main loop\n')
+    f.write('for n_2 in Set(range(1,2)+[sz-(i+1) for i in range(1,2)]):\n')
+    # variable storing the spaces
+    sp='    '
+    for i in range(3,floor(sz/2)+1):
+        tmpString='for n_'+str(i)+' in Set(range(1,'+str(i)+')+[sz-(i+1) for i in range(1,'+str(i)+')]).difference(Set(['
+        for j in range(2,i-1):
+            tmpString=tmpString+'n_'+str(j)+','
+        tmpString=tmpString+'n_'+str(i-1)+'])):\n'
+        f.write(sp+tmpString)
+        sp=sp+'    '
+    f.write(sp+"Tmp=HM(sz,1,'zero'); Tmp[sz-1,0]=sz-1\n")
+    for i in range(2,floor(sz/2)+1):
+        f.write(sp+'Tmp[n_'+str(i)+',0]=sz-'+str(i)+'\n')
+    f.write(sp+"# Initializing the list of tuples\n")
+    f.write(sp+"c=[(0,0)]\n")
+    f.write(sp+"for i in range(1,sz):\n")
+    f.write(sp+"    if i-Tmp[i,0] >= 0 and not Tmp[i,0].is_zero():\n")
+    f.write(sp+"        c.append((i,i-Tmp[i,0]))\n")
+    f.write(sp+"    elif i-Tmp[i,0] < 0 and not Tmp[i,0].is_zero():\n")
+    f.write(sp+"        c.append((i,i+Tmp[i,0]))\n")
+    f.write(sp+"# Initializing the list which will store the partial trees\n")
+    f.write(sp+"print c\n")
+    f.write(sp+"RsLt=RsLt+c\n")
+    f.write(sp+"T2GraphII(c,sz).plot().save(str(tc)+'.png')\n")
+    f.write(sp+"tc=tc+1\n")
+    # Closing the file
+    f.close()
+
+def generate_script_fast_partial_graceful_listII(sz):
+    """
+    The produces an implementation an optimal sage script for
+    displaying and listing partial gracefully labled graph on
+    sz vertices, sz must be greater than 4. Make sure to include the
+    Hypermatrix Package in the working directory. The difference with
+    inplementation above is that this function displays one partial
+    tree per equivalence classe.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: !touch fast_listing_of_partial_graceful_trees_on_10_verticesII.sage
+        sage: !rm fast_listing_of_partial_graceful_trees_on_10_verticesII.sage
+        sage: generate_script_fast_partial_graceful_listII(10)
+        sage: !ls fast_listing_of_partial_graceful_trees_on_10_verticesII.sage
+        fast_listing_of_partial_graceful_trees_on_10_verticesII.sage
+        
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Creating the string corresponding to the file name
+    filename = 'fast_listing_of_partial_graceful_trees_on_'+str(sz)+'_verticesII.sage'
+    # Opening the file
+    f = open(filename,'w')
+    f.write('# Loading the Hypermatrix Package\n')
+    f.write("load('./Hypermatrix_Algebra_tst.sage')\n\n")
+    f.write('# Loading the Graceful Graph Package\n')
+    f.write("load('./graceful_graph_package.sage')\n\n")
+    f.write('# Initialization of the size parameter\n')
+    f.write('sz='+str(sz)+'\n\n')
+    f.write('# List storing the result\n')
+    f.write('RsLt=[]; tc=0\n\n')
+    f.write('# Main loop\n')
+    f.write('for n_2 in Set(range(1,2)+[sz-(i+1) for i in range(1,2)]):\n')
+    # variable storing the spaces
+    sp='    '
+    for i in range(3,floor(sz/2)+1):
+        tmpString='for n_'+str(i)+' in Set(range(1,'+str(i)+')+[sz-(i+1) for i in range(1,'+str(i)+')]).difference(Set(['
+        for j in range(2,i-1):
+            tmpString=tmpString+'n_'+str(j)+','
+        tmpString=tmpString+'n_'+str(i-1)+'])):\n'
+        f.write(sp+tmpString)
+        sp=sp+'    '
+    f.write(sp+"Tmp=HM(sz,1,'zero'); Tmp[sz-1,0]=sz-1\n")
+    for i in range(2,floor(sz/2)+1):
+        f.write(sp+'Tmp[n_'+str(i)+',0]=sz-'+str(i)+'\n')
+    f.write(sp+"# Initializing the list of tuples\n")
+    f.write(sp+"c=[]\n")
+    f.write(sp+"for i in range(1,sz):\n")
+    f.write(sp+"    if i-Tmp[i,0] >= 0 and not Tmp[i,0].is_zero():\n")
+    f.write(sp+"        c.append((i,i-Tmp[i,0]))\n")
+    f.write(sp+"    elif i-Tmp[i,0] < 0 and not Tmp[i,0].is_zero():\n")
+    f.write(sp+"        c.append((i,i+Tmp[i,0]))\n")
+    f.write(sp+"# Initializing the list which will store the partial trees\n")
+    f.write(sp+"if len(RsLt) == 0:\n")
+    f.write(sp+"    RsLt=RsLt+[c]\n")
+    f.write(sp+"    tc=tc+1\n")
+    f.write(sp+"    print c\n")
+    f.write(sp+"    T2GraphII(c,sz).plot().save(str(tc)+'.png')\n")
+    f.write(sp+"elif len(RsLt) > 0:\n")
+    f.write(sp+"    Is_Absent=True\n")
+    f.write(sp+"    for Tple in RsLt:\n")
+    f.write(sp+"        if T2GraphII(Tple,sz).is_isomorphic(T2GraphII(c,sz)):\n")
+    f.write(sp+"            Is_Absent=False; break\n")
+    f.write(sp+"    if Is_Absent:\n")
+    f.write(sp+"        RsLt=RsLt+[c]\n")
+    f.write(sp+"        tc=tc+1\n")
+    f.write(sp+"        print c\n")
+    f.write(sp+"        T2GraphII(c,sz).plot().save(str(tc)+'.png')\n")
+    # Closing the file
+    f.close()
+
+def RandomGraphSignedPermutationClasses(n):
+    """
+    Returns a random graph selected uniformly among the
+    unlabeled graphs which admits a graceful labelin.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: RandomGraphSignedPermutationClasses(3)
+        [0, -1, -2]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    L=GraphSignedPermutationClassesII(n)
+    return L[randint(0,len(L)-1)]
+
+def RandomTreeSignedPermutationClasses(n):
+    """
+    Returns a random tress selected uniformly among the
+    unlabeled graphs which admits a graceful labelin.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: RandomTreeSignedPermutationClasses(3)
+        [0, -1, -2]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    L=TreeSignedPermutationClassesII(n)
+    return L[randint(0,len(L)-1)]
+
+def Formator(CnstrLst, VrbLst):
+    """
+    Takes as input a List of linear constraints
+    and a list of variables and outputs matrix
+    and the right hand side vector associate
+    with the matrix formulation of the constraints.
+    working over SR for both A and b.
+
+    EXAMPLES:
+
+    ::
+
+        sage: x,y = var('x,y')
+        sage: CnstrLst = [x+y==1, x-y==2]
+        sage: VrbLst = [x, y]
+        sage: [A,b] = Formator(CnstrLst, VrbLst)
+        sage: A
+        [ 1  1]
+        [ 1 -1]
+        sage: b
+        [1]
+        [2]
+
+
+    AUTHORS:
+    - Edinah K. Gnang and Ori Parzanchevski
+    """
+    # Initializing the Matrix
+    A=Matrix(SR,len(CnstrLst),len(VrbLst),zero_matrix(len(CnstrLst),len(VrbLst)))
+    b=vector(SR, [eq.rhs() for eq in CnstrLst]).column()
+    for r in range(len(CnstrLst)):
+        for c in range(len(VrbLst)):
+            A[r,c]=(CnstrLst[r]).lhs().coefficient(VrbLst[c])
+    return [A,b]
+
+
+def CountGracefulTreeLabelings(sigma):
+    """
+    Implements the counting formla derived via Cramer's rule
+    The implementation is very slow because it computes a 
+    sum over all permutations and all signed permutations.
+    The function does not work for non trees. Because the
+    incidence matrix inversion formula breaks for non
+    trees due to the fact that the Nullsapce has dimension
+    greater then one.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: CountGracefulTreeLabelings([0, 1, -2])[0]
+        2
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initializing the tuple representation
+    T=SP2T(sigma)
+    # Initialization of the size parameter
+    sz = len(T)
+    # Initialization of the list of variables
+    X = [var('x'+str(i)) for i in range(sz)]
+    Y = [0]+[var('y'+str(i)) for i in range(1,sz)]
+    # Initialization of the edge function
+    F=[T[i][1] for i in range(sz)]
+    # Initialization of the edge list
+    Le = Tuple2EdgeList(T,'x')
+    # Initialization of the list of equations
+    Eq = [0*X[0] == Y[0]]+[Le[i] == Y[i] for i in range(1,sz)]
+    # Formating the constraints to extract the incidence
+    # matrix and the edge vector on the right hand side.
+    [B,b] = Formator(Eq,X)
+    # Alternative derivation of the solution via matrix inversion
+    M = zero_matrix(SR,sz,sz)
+    M[:sz-1,:sz-1] = B[1:,:sz-1].inverse()
+    Lf = (M*Matrix(SR,sz,1,Y[1:]+[0])-min_symbolic((M*Matrix(SR,sz,1,Y[1:]+[0])).list())*ones_matrix(SR,sz,1)).list()
+    # Initialization of list of signed permutations
+    SP = SignedPermutations(sz)
+    # Initialization of the list of permutations.
+    P = Permutations(sz-1)
+    # Initialization of the result list
+    RsLt=[]
+    # Initialization of the sum
+    f = 0
+    for tmq in P:
+        q = [0]+[tmq[i] for i in range(sz-1)]
+        for p in SP:
+            # Initializing the vertex variable values
+            Xn = [Lf[i].subs([Y[q[j]] == p[j] for j in range(1,sz)]) for i in range(sz)]
+            tmpf1 = prod([prod([(j-Xn[i])/(j-i) for j in range(sz,2*sz-1)]) for i in range(sz)])^2
+            tmpf2 = prod([(Xn[j]-Xn[i])/(j-i) for i in range(sz) for j in range(sz) if i<j])^2
+            f=f+tmpf1*tmpf2
+            if tmpf1 != 0 and tmpf2 != 0:
+                RsLt.append([[X[i]==Xn[i] for i in range(sz)], [Le[i]==(B*Matrix(SR,sz,1,Xn)).list()[i] for i in range(sz)]])
+                #print 'Xn = ', [X[i]==Xn[i] for i in range(sz)]
+                #print 'B*Xn=', [Le[i]==(B*Matrix(SR,sz,1,Xn)).list()[i] for i in range(sz)]
+                #print '\n'
+    return [f,RsLt]
 
