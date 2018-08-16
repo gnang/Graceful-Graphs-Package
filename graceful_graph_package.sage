@@ -410,6 +410,53 @@ def SignedPermutations(sz):
         RsltL=RsltL+l[0]
     return RsltL
 
+def FunctionalMonomialGracefulTreeTerms(sz,A):
+    """
+    Outputs the sum of monomials associated with functional trees
+    rooted at 0. The input is an HM
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=4; f=FunctionalMonomialGracefulTreeTerms(sz,HM(sz,sz,'a')); f
+        a00*a10*a20*a30 + a00*a12*a20*a30 + a00*a13*a21*a30 + a00*a13*a23*a30
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the Identity matrix
+    Id=identity_matrix(sz); SP=SignedPermutations(sz)
+    # Initialization of the matrix
+    dt=0
+    for sigma in SP:
+        M=Matrix2HM(sum(A[i,i+sigma[i]]*Id[:,i]*Id[i+sigma[i],:] for i in rg(sz)))
+        # Initialization of the directed Laplcian
+        Ml=HM(2,(M*HM(sz,1,'one')).list(),'diag')-M
+        dt=dt+A[0,0]*Deter(Ml.matrix()[1:,1:])
+    return dt
+
+def FunctionalMonomialGracefulGraphTerms(sz,A):
+    """
+    Outputs the sum of monomials associated with functional trees
+    rooted at 0. The input is an HM
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=4; FunctionalMonomialGracefulGraphTerms(sz,HM(sz,sz,'a'))
+        a00*a10*a20*a30 + a00*a12*a20*a30 + a00*a13*a21*a30 + a00*a13*a23*a30
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    return sum(prod(A[i,i+sigma[i]] for i in rg(sz)) for sigma in SignedPermutations(sz))
+
 @cached_function
 def SignedPermutationsII(sz,k):
     """
@@ -477,208 +524,54 @@ def SignedPermutationsII(sz,k):
         RsltL=RsltL+l[0]
     return RsltL
 
-def LeftSignedPermutation(sigma):
+@cached_function
+def SignedPermutationsAlphaI(sz):
     """
-    The method returns a list description of the signed permutation
-    associated with the left child. The method splits the node with
-    the smallest label to create a leaf edge.
+    Goes through all permutations of sz > 1 elements and outputs
+    the list of signed permutations associated with graceful graphs.
 
     EXAMPLES:
 
     ::
 
-        sage: sigma=[0, 1, -2]; LeftSignedPermutation(sigma)
-        [0, 1, -2, -3]
-        
+        sage: L=SignedPermutationsAlphaI(4)
+        sage: L
+        [[[0, 1, -2, -3], 1],
+         [[0, -1, -2, -3], 1],
+         [[0, 2, 1, -3], y^8],
+         [[0, 2, -1, -3], y^8]]
+
 
     AUTHORS:
     - Edinah K. Gnang
     """
-    return sigma+[-len(sigma)]
+    # Initialization of the list of variables
+    x,y=var('x,y')
+    return [[sigma, prod(prod(y^(sz^j) for j in rg(min(i, abs(sigma[i])), max(i, abs(sigma[i])))) for i in rg(sz))] for sigma in SignedPermutations(sz)]
 
-def MiddleSignedPermutationsI(sigma):
+def SignedPermutationsAlphaII(sz):
     """
-    The method returns a list description of the first family of middle 
-    children. The method splits the vertex with the smallest label to
-    create a non leaf edge.
+    Goes through all permutations of sz > 1 elements and outputs
+    the list of signed permutations associated with graceful graphs.
 
     EXAMPLES:
 
     ::
 
-        sage: MiddleSignedPermutationsI([0, -1, -2, -3, -4])
-        [[0, 4, -2, -3, 1, -5], [0, -1, 3, 2, -4, -5]]
+        sage: L=SignedPermutationsAlphaII(4)
+        sage: L
+        [[[0, 1, -2, -3], y0^2*y1^3*y2],
+         [[0, -1, -2, -3], y0^3*y1^2*y2],
+         [[0, 2, 1, -3], y0*y1^2*y2^3],
+         [[0, 2, -1, -3], y0*y1^3*y2^2]]        
 
 
     AUTHORS:
     - Edinah K. Gnang
     """
-    # Initializing the list and the vertex set
-    L=[]; S=Set([i for i in range(1,len(sigma)) if i+sigma[i]==0])
-    # Going through all the subsets of vertices adjacent to 0
-    if S.cardinality() >= 2:
-        for s in S.subsets():
-            if (s.cardinality() >= 1) and (s.cardinality() < S.cardinality()):
-                # Initializing the boolean variable asserting the splitting condition
-                splittable=True
-                # for (i-0) in s
-                for i in s:
-                    if not (len(sigma)-i) in s:
-                        splittable=False; break
-                if splittable:
-                    Tmp=[]
-                    for t in range(len(sigma)):
-                        #if t in s and t+sigma[t] == 0:
-                        if t in s:
-                            Tmp.append(sigma[t]+len(sigma))
-                        else:
-                            Tmp.append(sigma[t])
-                    Tmp.append(-len(sigma))
-                    L.append(Tmp)
-    return L
-
-def MiddleSignedPermutationsII(sigma):
-    """
-    The method returns list description of the middle children by the second
-    transformation rule. This implementation splits the vertex with the 
-    largest integer label.
-
-    EXAMPLES:
-
-    ::
-
-        sage: MiddleSignedPermutationsII([0, 3, 2, -1, -4])
-        [[0, 4, -2, -3, -1, -5]]
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initializing the list and the vertex set
-    L=[]; S=Set([0]+[i for i in range(1,len(sigma)) if i+sigma[i]==len(sigma)-1])
-    # Going through all the subsets of vertices adjacent to len(sigma)-1
-    if S.cardinality() >= 2:
-        for s in S.subsets():
-            if (s.cardinality() >= 1) and (s.cardinality() < S.cardinality()):
-                # Initializing the boolean variable asserting the splitting condition
-                splittable=True
-                # for (i-0) in s
-                for i in s:
-                    if not (len(sigma)-(i+1)) in [v+1 for v in s]:
-                        splittable=False; break
-                if splittable:
-                    Tmp=[0]
-                    for t in range(1,len(sigma)):
-                        if t in [v+1 for v in s]:
-                            Tmp.append(-t)
-                        else:
-                            if t-1==0:
-                                Tmp.append(len(sigma)-1)
-                            else:
-                                Tmp.append(sigma[t-1])
-                    Tmp.append(-len(sigma))
-                    L.append(Tmp)
-    return L
-
-def RightSignedPermutation(sigma):
-    """
-    The method returns list description of the signed permutation
-    associated with the right child by the first transformation rule.
-
-    EXAMPLES:
-
-    ::
-
-        sage: sigma=[0, 1, -2]; RightSignedPermutation(sigma)
-        [0, 2, 1, -3]
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    return [0,len(sigma)-1]+sigma[1:-1]+[-len(sigma)]
-
-def NodeSplittingSignedPermutationList(T, nbv):
-    """
-    The method returns list of signed permutations associated with
-    gracefully labeled trees obtained via node splitting for trees
-    having up to nbv+1 vertices.
-    Note that there is a symmetry relating all the descendants
-    of [0,-1,-2] and the descendants of [0,1,-2]. 
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingSignedPermutationList([0, -1, -2], 3); L
-        [[0, -1, -2], [0, -1, -2, -3], [0, 2, -1, -3]]
-       
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[T]
-    # Initialization of the indexing variable
-    indx=0
-    while len(L[indx]) <= nbv:
-        L.append(LeftSignedPermutation(L[indx]))
-        TmpL=MiddleSignedPermutationsI(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        TmpL=MiddleSignedPermutationsII(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        L.append(RightSignedPermutation(L[indx]))
-        indx=indx+1
-    return L
-
-def NodeSplittingK_arrySignedPermutationList(T, nbv, K):
-    """
-    The method returns list of signed permutations associated with
-    gracefully labeled trees obtained via node splitting for trees
-    having up to nbv+1 vertices where each vertex has degree at
-    most K.
-    Note that there is a symmetry relating all the descendants
-    of [0,-1,-2] and the descendants of [0,1,-2]. 
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingK_arrySignedPermutationList([0, -1, -2], 3, 3); L
-        [[0, -1, -2], [0, -1, -2, -3], [0, 2, -1, -3]]
-       
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[T]
-    # Initialization of the indexing variable
-    indx=0
-    while len(L[indx]) <= nbv:
-        L.append(LeftSignedPermutation(L[indx]))
-        TmpL=MiddleSignedPermutationsI(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        TmpL=MiddleSignedPermutationsII(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        L.append(RightSignedPermutation(L[indx]))
-        indx=indx+1
-    return [l for l in L if Set(SignedPermutationListDegreeSequence(l)).issubset(Set(range(1,K+1)))]
+    # Initialization of the list of variables
+    X=var_list('x',sz); Y=var_list('y',sz)
+    return [[sigma, prod(prod(Y[j] for j in rg(min(i, i+sigma[i]), max(i, i+sigma[i]))) for i in rg(sz))] for sigma in SignedPermutations(sz)]
 
 def GraphSignedPermutationOrbitsT(T):
     """
@@ -1248,7 +1141,6 @@ def Tuple2EdgeListII(Lt, c):
     # returning of the list
     return [1]+[var(c+str(t[0]))/var(c+str(t[1])) for t in Lt[1:]]
 
-
 def SP2T(sp):
     """
     Returns the tuple encoding of the input signed permutation
@@ -1469,229 +1361,29 @@ def is_Tree(A):
     else:
         return False
 
-@cached_function
-def GeneratorGracefulNonTreeFunctionsTuples(n):
+def is_TreeII(A):
     """
-    Goes through all the permutation of n > 1 elements and outputs
-    the list of fuction associated with generator graceful non trees
-    on the vertices derived from graceful permutations.
+    Returns an boolean value determining if the input unweighted
+    adjacency matrix is associated with a tree. The implementation
+    is based on a implementation of the matrix tree theorem.
 
 
     EXAMPLES:
-
     ::
-
-
-        sage: GeneratorGracefulNonTreeFunctionsTuples(7)
-        [[[], [0, 1, 2, 3, 4, 5, 6]],
-         [[], [0, 1, 3, 2, 4, 5, 6]],
-         [[], [0, 1, 4, 2, 3, 5, 6]],
-         [[], [0, 1, 4, 3, 2, 5, 6]],
-         [[], [0, 2, 1, 3, 4, 5, 6]],
-         [[], [0, 2, 3, 1, 4, 5, 6]],
-         [[[(0, 0), (1, 3), (2, 6), (3, 4), (4, 1), (5, 0), (6, 0)]],
-          [0, 2, 4, 1, 3, 5, 6]],
-         [[], [0, 2, 4, 3, 1, 5, 6]],
-         [[], [0, 3, 1, 2, 4, 5, 6]],
-         [[], [0, 3, 2, 1, 4, 5, 6]],
-         [[], [0, 3, 4, 1, 2, 5, 6]],
-         [[[(0, 0), (1, 4), (2, 6), (3, 1), (4, 3), (5, 0), (6, 0)]],
-          [0, 3, 4, 2, 1, 5, 6]],
-         [[], [0, 4, 1, 2, 3, 5, 6]],
-         [[], [0, 4, 1, 3, 2, 5, 6]],
-         [[], [0, 4, 2, 1, 3, 5, 6]],
-         [[], [0, 4, 2, 3, 1, 5, 6]],
-         [[], [0, 4, 3, 1, 2, 5, 6]],
-         [[], [0, 4, 3, 2, 1, 5, 6]],
-         [[], [0, 5, 1, 2, 3, 4, 6]],
-         [[[(0, 0), (1, 6), (2, 3), (3, 5), (4, 0), (5, 2), (6, 0)]],
-          [0, 5, 1, 2, 4, 3, 6]],
-         [[], [0, 5, 1, 3, 2, 4, 6]],
-         [[], [0, 5, 1, 3, 4, 2, 6]],
-         [[], [0, 5, 2, 1, 3, 4, 6]],
-         [[], [0, 5, 2, 1, 4, 3, 6]],
-         [[], [0, 5, 2, 3, 1, 4, 6]],
-         [[], [0, 5, 2, 3, 4, 1, 6]],
-         [[], [0, 5, 3, 1, 2, 4, 6]],
-         [[[(0, 0), (1, 6), (2, 5), (3, 2), (4, 0), (5, 3), (6, 0)]],
-          [0, 5, 3, 1, 4, 2, 6]],
-         [[], [0, 5, 3, 2, 1, 4, 6]],
-         [[], [0, 5, 3, 2, 4, 1, 6]],
-         [[], [0, 5, 4, 1, 2, 3, 6]],
-         [[], [0, 5, 4, 1, 3, 2, 6]],
-         [[], [0, 5, 4, 2, 1, 3, 6]],
-         [[], [0, 5, 4, 2, 3, 1, 6]],
-         [[], [0, 5, 4, 3, 1, 2, 6]],
-         [[], [0, 5, 4, 3, 2, 1, 6]]]
-        sage: L=[]
-        sage: TpL=GeneratorGracefulNonTreeFunctionsTuples(7)
-        sage: for l in TpL:
-        ....:     L=L+l[0]
-        ....:
-        sage: L
-        [[(0, 0), (1, 3), (2, 6), (3, 4), (4, 1), (5, 0), (6, 0)],
-         [(0, 0), (1, 4), (2, 6), (3, 1), (4, 3), (5, 0), (6, 0)],
-         [(0, 0), (1, 6), (2, 3), (3, 5), (4, 0), (5, 2), (6, 0)],
-         [(0, 0), (1, 6), (2, 5), (3, 2), (4, 0), (5, 3), (6, 0)]]
-
+        sage: is_Tree(Matrix([[0, 1, 0], [1, 0, 1], [0, 1, 0]]))
+        True
 
     AUTHORS:
     - Edinah K. Gnang
     """
-    # Initialization of the identity matrix
-    Id=identity_matrix(n)
-    # Initialization of the list collecting graceful permutations.
-    L=[]
-    # Loop going through the graceful permutations.
-    for p in GracefulPermutations(n):
-        # Initialization of the list of functions.
-        c=[]
-        for j in range(n):
-            if j == 0:
-                if len(c)==0:
-                    c.append([(j, p[j])])
-                else:
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, p[j])]
-            # testing that only the first criteria is met
-            elif (j > 0) and (p[j] < n-j) and not (j >= p[j]):
-                if len(c)==0:
-                    c.append([(j, j+p[j])])
-                else:
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, j+p[j])]
-            # testing that only the second criteria is met
-            elif (j > 0) and not (p[j] < n-j) and (j >= p[j]):
-                if len(c)==0:
-                    c.append([(j, j-p[j])])
-                else:
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, j-p[j])]
-            # testing that all two criterias are met
-            elif (j > 0) and (p[j] < n-j) and (j >= p[j]):
-                if len(c)==0:
-                    c.append([(j, j+p[j])])
-                    c.append([(j, j-p[j])])
-                else:
-                    d=copy(c)
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, j+p[j])]
-                    for i in range(len(d)):
-                        d[i]=d[i]+[(j, j-p[j])]
-                    c=c+d
-        # Initializing the list which will store the generators
-        g=[]
-        for il in c:
-            # initializing the counter for the degree of 0 and n-1.
-            cnt0=1; cnt1=1
-            # computing the degrees of the two vertices.
-            # the loop starts at 1 to avoid counting the loop edge
-            for ix in range(1,n-1):
-                if il[ix][1]==0:
-                    cnt0=cnt0+1
-                elif il[ix][1]==(n-1):
-                    cnt1=cnt1+1
-            # Initilization of the adjacency matrix
-            if min(cnt0,cnt1)>1 and not is_Tree( sum([Id[:,t[0]]*Id[t[1],:]+Id[:,t[1]]*Id[t[0],:] for t in il]) ):
-                g.append(il)
-        L.append([g, p])
-    return L
-
-@cached_function
-def GeneratorGracefulTreeFunctionsTuples(n):
-    """
-    Goes through all the permutation of n > 1 elements and outputs
-    the list of fuction associated with generator graceful trees on
-    the vertices derived from graceful permutations.
-
-
-    EXAMPLES:
-
-    ::
-
-
-        sage: GeneratorGracefulTreeFunctionsTuples(5)
-        [[[[(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)],
-           [(0, 0), (1, 0), (2, 4), (3, 0), (4, 0)]],
-          [0, 1, 2, 3, 4]],
-         [[], [0, 2, 1, 3, 4]],
-         [[], [0, 3, 1, 2, 4]],
-         [[[(0, 0), (1, 4), (2, 0), (3, 4), (4, 0)],
-           [(0, 0), (1, 4), (2, 0), (3, 2), (4, 0)]],
-          [0, 3, 2, 1, 4]]]
-        sage: L=[]
-        sage: TpL=GeneratorGracefulTreeFunctionsTuples(5)
-        sage: for l in TpL:
-        ....:     L=L+l[0]
-        ....:
-        sage: L
-        [[(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)],
-         [(0, 0), (1, 0), (2, 4), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 4), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 2), (4, 0)]]
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the identity matrix
-    Id=identity_matrix(n)
-    # Initialization of the list collecting graceful permutations.
-    L=[]
-    # Loop going through the graceful permutations.
-    for p in GracefulPermutations(n):
-        # Initialization of the list of functions.
-        c=[]
-        for j in range(n):
-            if j == 0:
-                if len(c)==0:
-                    c.append([(j, p[j])])
-                else:
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, p[j])]
-            # testing that only the first criteria is met
-            elif (j > 0) and (p[j] < n-j) and not (j >= p[j]):
-                if len(c)==0:
-                    c.append([(j, j+p[j])])
-                else:
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, j+p[j])]
-            # testing that only the second criteria is met
-            elif (j > 0) and not (p[j] < n-j) and (j >= p[j]):
-                if len(c)==0:
-                    c.append([(j, j-p[j])])
-                else:
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, j-p[j])]
-            # testing that all two criterias are met
-            elif (j > 0) and (p[j] < n-j) and (j >= p[j]):
-                if len(c)==0:
-                    c.append([(j, j+p[j])])
-                    c.append([(j, j-p[j])])
-                else:
-                    d=copy(c)
-                    for i in range(len(c)):
-                        c[i]=c[i]+[(j, j+p[j])]
-                    for i in range(len(d)):
-                        d[i]=d[i]+[(j, j-p[j])]
-                    c=c+d
-        # Initializing the list which will store the generators
-        g=[]
-        for il in c:
-            # initializing the counter for the degree of 0 and n-1.
-            cnt0=1; cnt1=1
-            # computing the degrees of the two vertices.
-            # the loop starts at 1 to avoid counting the loop edge
-            for ix in range(1,n-1):
-                if il[ix][1]==0:
-                    cnt0=cnt0+1
-                elif il[ix][1]==(n-1):
-                    cnt1=cnt1+1
-            # Initilization of the adjacency matrix
-            if min(cnt0,cnt1)>1 and is_Tree( sum([Id[:,t[0]]*Id[t[1],:]+Id[:,t[1]]*Id[t[0],:] for t in il]) ):
-                g.append(il)
-        L.append([g, p])
-    return L
+    # Initialization of the dierected Laplacian
+    lA=diagonal_matrix((A*ones_matrix(A.nrows(),1)).list())-A
+    # Initialization of the list of sumbratrices
+    Lmtr=[Matrix(ZZ,sz-1,sz-1,[lA[u,v] for u in range(sz) for v in range(sz) if u!=t if v!=t]) for t in range(sz)]
+    if sum(A[t,t]*Lmtr[t].det() for t in range(sz)) == 1:
+        return True
+    else:
+        return False
 
 @cached_function
 def TreeSignedPermutations(n):
@@ -1727,7 +1419,9 @@ def TreeSignedPermutations(n):
 def TreeSignedPermutationsII(sz,j):
     """
     Goes through all the permutation of sz > 1 elements and outputs
-    the list of of signed permutation associated with trees .
+    the list of of signed permutation associated with trees.
+    the input j is associated with the shift to the permutation
+    in the permutation encoding not to be confused with the root.
 
 
     EXAMPLES:
@@ -2203,14 +1897,15 @@ def TreeSignedPermutationClassesIII(n):
             cL.append(s)
     return cL
 
-def RepresentativeTreeSignedPermutationClassesII(sz,j):
+def RepresentativeTreeSignedPermutationClassesII(sz,k):
     """
     Obtains representative equivalence classes of signed 
     function defined by the isomorphism classes of 
     associated trees. The tree isomorphism function is
     doing the heavy lifting here. The difference with
     the implementation above is that we only store one
-    tree per equivalence class and ignores the loop edges.
+    tree per equivalence class and does not ignores the
+    loop edges.
 
 
     EXAMPLES:
@@ -2218,7 +1913,7 @@ def RepresentativeTreeSignedPermutationClassesII(sz,j):
     ::
 
 
-        sage: RepresentativeTreeSignedPermutationClassesII(4,0)
+        sage: RepresentativeTreeSignedPermutationClassesIII(4,0)
         [[0, 1, -2, -3], [0, -1, -2, -3]]
 
 
@@ -2226,19 +1921,60 @@ def RepresentativeTreeSignedPermutationClassesII(sz,j):
     - Edinah K. Gnang
     """
     # Initialization of the list of permutations
-    L=TreeSignedPermutationsII(sz,j)
+    L=TreeSignedPermutations(sz)
     # Initialization of the list storing the equivalence class of trees.
     cL=[ L[0] ]
     # Loop perfomring the isomorphism binning.
     for s in L:
         nwT=True
         for i in range(len(cL)):
-            if T2GraphII([(j,j+s[j]) for j in range(sz) if j!=j+s[j]],sz).is_isomorphic(T2GraphII([(j,j+cL[i][j]) for j in range(sz) if j!=j+s[j]],sz)):
+            if T2DiGraphII([(j,j+s[j]) for j in range(sz)],sz).is_isomorphic(T2DiGraphII([(j,j+cL[i][j]) for j in range(sz)],sz)):
                 nwT=False
                 break
         if nwT==True:
             cL.append(s)
-    return cL
+    return [T2SP(switch_sink(SP2T(sg),k)) for sg in cL]
+
+def RepresentativeTreeTupleClasses(sz,k):
+    """
+    Obtains representative equivalence classes of tuple
+    function rooted at j defined by the isomorphism classes of 
+    associated trees. The tree isomorphism function is
+    doing the heavy lifting here. The difference with
+    the implementation above is that we only store one
+    tree per equivalence class and does not ignores the
+    loop edges.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: RepresentativeTreeTupleClasses(4,0)
+        [[(0, 0), (1, 2), (2, 0), (3, 0)],
+         [(0, 0), (1, 0), (2, 0), (3, 0)],
+         [(0, 0), (1, 3), (2, 3), (3, 0)],
+         [(0, 0), (1, 3), (2, 1), (3, 0)]]        
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of permutations
+    L=TreeSignedPermutations(sz)
+    # Initialization of the list storing the equivalence class of trees.
+    cL=[ L[0] ]
+    # Loop perfomring the isomorphism binning.
+    for s in L:
+        nwT=True
+        for i in range(len(cL)):
+            if T2DiGraphII([(j,j+s[j]) for j in range(sz)],sz).is_isomorphic(T2DiGraphII([(j,j+cL[i][j]) for j in range(sz)],sz)):
+                nwT=False
+                break
+        if nwT==True:
+            cL.append(s)
+    return [switch_sink(SP2T(sg),k) for sg in cL]
 
 def HiddenNonTreeFunctionsTupleClasses(n):
     """
@@ -2407,112 +2143,6 @@ def NonTreeSignedPermutationClassesII(n):
         nwT=True
         for i in range(len(cL)):
             if T2Graph([(j,j+s[j]) for j in range(n)]).is_isomorphic(T2Graph([(j,j+cL[i][j]) for j in range(n)])):
-                nwT=False
-                break
-        if nwT==True:
-            cL.append(s)
-    return cL
-
-def NodeSplittingSignedPermutationClasses(nbv):
-    """
-    Obtain the equivalence classes of signed function defined by
-    the isomorphism classes of associated trees obtained via node
-    splittings. The tree isomorphism function is doing the heavy lifting here.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingSignedPermutationClasses(4); L
-        [[[0, -1, -2, -3], [0, 2, 1, -3]], [[0, 2, -1, -3], [0, 1, -2, -3]]]        
-       
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[[0,-1]]
-    # Initialization of the indexing variable
-    indx=0
-    while len(L[indx]) <= nbv:
-        L.append(LeftSignedPermutation(L[indx]))
-        TmpL=MiddleSignedPermutationsI(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        TmpL=MiddleSignedPermutationsII(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        L.append(RightSignedPermutation(L[indx]))
-        indx=indx+1
-    TmpL=[l for l in L if len(l)==nbv]; L=TmpL
-    # Initialization of the list storing the equivalence class of trees.
-    cL=[ [L[0]] ]
-    # Loop perfomring the isomorphism binning.
-    for s in L:
-        nwT=True
-        for i in range(len(cL)):
-            if SP2Graph(s).is_isomorphic(SP2Graph(cL[i][0])):
-                if not s in cL[i]:
-                    cL[i].append(s)
-                nwT=False
-                break
-        if nwT==True:
-            cL.append([s])
-    return cL
-
-def NodeSplittingSignedPermutationClassesII(nbv):
-    """
-    Obtain representatives of equivalence classes of signed function
-    defined by the isomorphism classes of associated trees obtained via node
-    splittings. The tree isomorphism function is doing the heavy lifting here.
-    The difference with the implementation above is that only one tree is stored
-    per equivalence classes.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingSignedPermutationClassesII(4); L
-        [[0, -1, -2, -3], [0, 2, -1, -3]]        
-       
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[[0,-1]]
-    # Initialization of the indexing variable
-    indx=0
-    while len(L[indx]) <= nbv:
-        L.append(LeftSignedPermutation(L[indx]))
-        TmpL=MiddleSignedPermutationsI(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        TmpL=MiddleSignedPermutationsII(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        L.append(RightSignedPermutation(L[indx]))
-        indx=indx+1
-    TmpL=[l for l in L if len(l)==nbv]; L=TmpL
-    # Initialization of the list storing the equivalence class of trees.
-    cL=[ L[0] ]
-    # Loop perfomring the isomorphism binning.
-    for s in L:
-        nwT=True
-        for i in range(len(cL)):
-            if SP2Graph(s).is_isomorphic(SP2Graph(cL[i])):
                 nwT=False
                 break
         if nwT==True:
@@ -2939,8 +2569,6 @@ def GracefulDiNonTreeList(n):
         Rslt.append([TmpL,l[1]])
     return Rslt
 
-
-
 def GeneratorGracefulDiGraphList(n):
     """
     Goes through all the permutation of graceful second index functions
@@ -3129,319 +2757,6 @@ def SignedPermutationListDegreeSequence(sp):
     """
     return EdgeListDegreeSequence(SP2T(sp))
 
-def LeftChild(T):
-    """
-    The method returns list description of the left child by the first
-    transformation rule.
-    
-
-    EXAMPLES:
-
-    ::
-
-        sage: LeftChild([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)])
-        [(0, 0), (1, 2), (2, 4), (3, 0), (4, 0), (5, 0)]
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    return T+[(len(T), 0)]
-
-def MidChildrenI(T):
-    """
-    The method returns list description of the middle children by the second
-    transformation rule. The implementation here splits the vertex with the
-    smallest integer label
-
-    EXAMPLES:
-
-    ::
-
-        sage: MidChildrenI([(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)])
-        [[(0, 0), (1, 5), (2, 0), (3, 0), (4, 5), (5, 0)],
-         [(0, 0), (1, 0), (2, 5), (3, 5), (4, 0), (5, 0)]]
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initializing the list and the vertex set
-    L=[]; S=Set([t[0] for t in T[1:] if t[1] == 0])
-    if S.cardinality() >= 2:
-        for s in S.subsets():
-            if (s.cardinality() >= 1) and (s.cardinality() < S.cardinality()):
-                # Initializing the boolean variable asserting the splitting condition
-                splittable = True
-                for i in s:
-                    if not (len(T)-i) in s:
-                        splittable=False; break
-                if splittable:
-                    Tmp=[]
-                    for t in T:
-                        if t[0] in s and t[1] == 0:
-                            Tmp.append((t[0], len(T)))
-                        else:
-                            Tmp.append(t)
-                    Tmp.append((len(T), 0))
-                    L.append(Tmp)
-    return L
-
-def MidChildrenII(T):
-    """
-    The method returns list description of the middle children by the second
-    transformation rule. This implementation splits the vertex with the 
-    largest integer label.
-
-    EXAMPLES:
-
-    ::
-
-        sage: MidChildrenII([(0, 0), (1, 4), (2, 4), (3, 4), (4, 0)])
-        [[(0, 0), (1, 0), (2, 5), (3, 5), (4, 0), (5, 0)],
-         [(0, 0), (1, 5), (2, 0), (3, 0), (4, 5), (5, 0)]]
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initializing the list and the vertex set
-    L=[]; S=Set([t[0]+1 for t in T if t[1] == len(T)-1]+[1])
-    if S.cardinality() >= 2:
-        for s in S.subsets():
-            if (s.cardinality() >= 1) and (s.cardinality() < S.cardinality()):
-                # Initializing the boolean variable asserting the splitting condition
-                splittable = True
-                for i in s:
-                    if not (len(T)-i) in s:
-                        splittable=False; break
-                if splittable:
-                    Tmp=[(0, 0)]
-                    for t in T[1:]:
-                        if t[0]+1 in s and t[1] == len(T)-1:
-                            Tmp.append((t[0]+1, 0))
-                        elif t[0] == len(T)-1 and t[1]==0 and 1 in s:
-                            Tmp.append((1,0))
-                        else:
-                            if t[1]==0:
-                                Tmp.append((t[1]+1, t[0]+1))
-                            else:
-                                Tmp.append((t[0]+1, t[1]+1))
-                    Tmp.append((len(T), 0)); Tmp.sort()
-                    L.append(copy(Tmp))
-    return L
-
-def RightChild(T):
-    """
-    The method returns list description of the left child by the second 
-    transformation rule.
-
-    EXAMPLES:
-
-    ::
-
-        sage: RightChild([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)])
-        [(0, 0), (1, 5), (2, 3), (3, 5), (4, 1), (5, 0)]
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    return [(0, 0), (1, len(T))] + [(T[i][0]+1, T[i][1]+1) for i in range(1,len(T)-1)] + [(len(T), 0)]
-
-def BinaryTreeArrayList(T, DegSeq):
-    """
-    The method returns list description of an array implementation
-    of a binary tree.
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=BinaryTreeArrayList([(0, 0), (1, 0)], [3, 1, 1, 1]); L
-        [[(0, 0), (1, 0)],
-         [(0, 0), (1, 0), (2, 0)],
-         [(0, 0), (1, 2), (2, 0)],
-         [(0, 0), (1, 0), (2, 0), (3, 0)],
-         [(0, 0), (1, 3), (2, 1), (3, 0)],
-         [(0, 0), (1, 2), (2, 0), (3, 0)],
-         [(0, 0), (1, 3), (2, 3), (3, 0)],
-         [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 1), (3, 1), (4, 0)],
-         [(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 4), (3, 2), (4, 0)],
-         [(0, 0), (1, 2), (2, 0), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 3), (3, 1), (4, 0)],
-         [(0, 0), (1, 3), (2, 3), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 4), (3, 4), (4, 0)]]
-        sage: for i in range(len(L)):
-        ....:     T2DiGraph(L[i]).plot().save(str(i)+'.png')
-        ....:
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[T]
-    # Initialization of the indexing variable
-    indx=0
-    while (sorted(EdgeListDegreeSequence(L[indx])))[::-1] <= (sorted(DegSeq))[::-1]:
-        L.append(LeftChild(L[indx])); L.append(RightChild(L[indx]))
-        indx=indx+1
-    return L
-
-def NodeSplittingList(T, DegSeq):
-    """
-    The method returns list description of an array implementation
-    of a binary tree.
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingList([(0, 0), (1, 0)], [3, 1, 1, 1]); L
-        [[(0, 0), (1, 0)],
-         [(0, 0), (1, 0), (2, 0)],
-         [(0, 0), (1, 2), (2, 0)],
-         [(0, 0), (1, 0), (2, 0), (3, 0)],
-         [(0, 0), (1, 3), (2, 1), (3, 0)],
-         [(0, 0), (1, 2), (2, 0), (3, 0)],
-         [(0, 0), (1, 3), (2, 3), (3, 0)],
-         [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
-         [(0, 0), (1, 0), (2, 4), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 4), (4, 0)],
-         [(0, 0), (1, 4), (2, 1), (3, 1), (4, 0)],
-         [(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 2), (4, 0)],
-         [(0, 0), (1, 4), (2, 4), (3, 2), (4, 0)],
-         [(0, 0), (1, 2), (2, 0), (3, 0), (4, 0)],
-         [(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 3), (3, 1), (4, 0)],
-         [(0, 0), (1, 3), (2, 3), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 4), (3, 4), (4, 0)]]
-        sage: for i in range(len(L)):
-        ....:     T2DiGraph(L[i]).plot().save(str(i)+'.png')
-        ....:
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[T]
-    # Initialization of the indexing variable
-    indx=0
-    while (sorted(EdgeListDegreeSequence(L[indx])))[::-1] <= (sorted(DegSeq))[::-1]:
-        L.append(LeftChild(L[indx]))
-        TmpL=MidChildrenI(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        TmpL=MidChildrenII(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        L.append(RightChild(L[indx]))
-        indx=indx+1
-    return L
-
-def NodeSplittingListII(T, nbv):
-    """
-    The method returns list description of an array implementation
-    of a binary tree.
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingListII([(0, 0), (1, 0)], 3); L
-        [[(0, 0), (1, 0)],
-         [(0, 0), (1, 0), (2, 0)],
-         [(0, 0), (1, 2), (2, 0)],
-         [(0, 0), (1, 0), (2, 0), (3, 0)],
-         [(0, 0), (1, 3), (2, 1), (3, 0)],
-         [(0, 0), (1, 2), (2, 0), (3, 0)],
-         [(0, 0), (1, 3), (2, 3), (3, 0)]]
-        sage: for i in range(len(L)):
-        ....:     T2DiGraph(L[i]).plot().save(str(i)+'.png')
-        ....:
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[T]
-    # Initialization of the indexing variable
-    indx=0
-    while len(L[indx]) <= nbv:
-        L.append(LeftChild(L[indx]))
-        TmpL=MidChildrenI(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        TmpL=MidChildrenII(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        L.append(RightChild(L[indx]))
-        indx=indx+1
-    return L
-
-def NodeSplittingGeneratorList(T, DegSeq):
-    """
-    The method returns list description of an array implementation
-    of a binary tree.
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingGeneratorList([(0, 0), (1, 0)], [3, 1, 1, 1]); L
-        [[(0, 0), (1, 0), (2, 4), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 4), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 2), (4, 0)],
-         [(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)]]
-        sage: for i in range(len(L)):
-        ....:     T2DiGraph(L[i]).plot().save(str(i)+'.png')
-        ....:
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=NodeSplittingList(T, DegSeq)
-    # Initializing the list which only stores generator trees.
-    GnrtrLst=[]
-    for t in L:
-        # initializing the counter for the degree of 0 and n-1.
-        cnt0=1; cnt1=1
-        # computing the degrees of the two vertices.
-        # the loop starts at 1 to avoid counting the loop edge
-        for ix in range(1,len(t)-1):
-            if t[ix][1]==0:
-                cnt0=cnt0+1
-            elif t[ix][1]==(len(t)-1):
-                cnt1=cnt1+1
-        # Initilization of the adjacency matrix
-        if min(cnt0,cnt1) > 1: 
-                GnrtrLst.append(t)
-    return GnrtrLst
-
 def T2DiGraph(T):
     """
     The method returns a directed graph object associated with 
@@ -3509,6 +2824,7 @@ def T2AdjacencyII(T,sz,c='a'):
     """
     The method returns a directed graph object associated with 
     with the tuple list description of the directed graph
+    the 1s are replaced with symbolic variables.
 
     EXAMPLES:
 
@@ -3637,6 +2953,26 @@ def T2Graph(T):
     Id=identity_matrix(len(T))
     return Graph(sum(Id[:,t[0]]*Id[t[1],:] for t in T[1:])+sum(Id[:,t[0]]*Id[t[1],:] for t in T[1:]).transpose())
 
+def T2GraphII(T):
+    """
+    The method returns an undirected graph object associated with 
+    with the tuple list description of the directed graph
+
+    EXAMPLES:
+
+    ::
+
+        sage: T2GraphII([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)]).degree_sequence()
+        [2, 2, 2, 1, 1]
+        
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the identity matrix
+    Id=identity_matrix(len(T))
+    return DiGraph(sum(Id[:,t[0]]*Id[t[1],:] for t in T))
+
 def SP2Graph(sigma):
     """
     The method returns an undirected graph object associated with 
@@ -3659,10 +2995,32 @@ def SP2Graph(sigma):
     Id=identity_matrix(len(T))
     return Graph(sum(Id[:,t[0]]*Id[t[1],:] for t in T[1:])+sum(Id[:,t[0]]*Id[t[1],:] for t in T[1:]).transpose())
 
+def SP2DiGraph(sigma):
+    """
+    The method returns an undirected graph object associated with 
+    with the tuple list description of the directed graph
+
+    EXAMPLES:
+
+    ::
+
+        sage: SP2DiGraph([(0-0), -(1-2), -(2-4), -(3-0), -(4-0)]).degree_sequence()
+        [4, 2, 2, 1, 1]
+        
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the Tree tuple function
+    T=[(i, i+sigma[i]) for i in range(len(sigma))]
+    # Initialization of the identity matrix
+    Id=identity_matrix(len(T))
+    return DiGraph(sum(Id[:,t[0]]*Id[t[1],:] for t in T))
+
 def TupleFunctionList(sz):
     """
     Returns list of edge tuple desctiption for all 
-    functional derected graphs.
+    functional directed graphs.
 
 
     EXAMPLES:
@@ -3697,6 +3055,7 @@ def TupleFunctionList(sz):
          [(0, 2), (1, 2), (2, 2)]]
 
 
+
     AUTHORS:
 
     - Edinah K. Gnang
@@ -3719,7 +3078,8 @@ def TupleFunctionList(sz):
 def TreeFunctionList(n):
     """
     Goes through all the functions and determines which ones
-    are associated with trees.
+    are associated with trees. One of think of thes trees as
+    rooted at 0.
 
     EXAMPLES:
     ::
@@ -3740,6 +3100,7 @@ def TreeFunctionList(n):
         [2, 0, 2],
         [3, 0, 2],
         [0, 1, 2]]
+
 
     AUTHORS:
     - Edinah K. Gnang
@@ -3786,12 +3147,87 @@ def TupleTreeFunctionList(sz):
          [(0, 0), (1, 2), (2, 0), (3, 2)],
          [(0, 0), (1, 3), (2, 0), (3, 2)],
          [(0, 0), (1, 0), (2, 1), (3, 2)]]
+        sage: sz=3; X=var_list('x',sz+1); Y=var_list('y',sz+1); Z=var_list('z',sz+1); Ta=HM(sz+1,sz+1,'a'); A=HM(sz+1,sz+1,'zero'); DgA=[Ta[i,i] for i in rg(sz+1)]
+        sage: for i in rg(sz+1):
+        ....:     for j in rg(sz+1):
+        ....:         A[i,j]=Ta[i,j]*X[abs(j-i)]*prod(Y[u] for u in rg(min(i,j), max(i,j)))*prod(Z[u] for u in rg(1+min(i,j), 1+max(i,j)))
+        ....:
+        sage: sum(prod(A[t[0],t[1]] for t in tp) for tp in TupleTreeFunctionList(sz))
+        a00*a10*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a00*a12*a20*x0*x1*x2*y0*y1^2*z1*z2^2 + a00*a10*a21*x0*x1^2*y0*y1*z1*z2
  
 
     AUTHORS:
     - Edinah K. Gnang
     """
-    return [[(0,0)]+[(i+1,l[i]) for i in rg(len(l))] for l in TreeFunctionList(sz)]
+    # Initialization of the lists
+    l=[sz for i in range(sz-1)]; Lf=[]
+    # Initialization of the identity matrix
+    Id=identity_matrix(sz)
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=[0]+entry
+        # Initialization of the adjacency martrix of the functional graph
+        A = sum([Id[:,j]*Id[f[j],:] for j in range(sz)])
+        # Initialization of the dierected Laplacian
+        lA= diagonal_matrix((A*ones_matrix(A.nrows(),1)).list())-A
+        # Testing treeness
+        if Matrix(ZZ,sz-1,sz-1,[lA[u,v] for u in rg(1,sz) for v in rg(1,sz)]).det()*A[0,0] == 1:
+            #Lf.append(f)
+            Lf.append([(j, f[j]) for j in rg(sz)])
+    return Lf
+
+def RootedTreeFunctionList(sz):
+    """
+    Goes through all the functions and determines which ones
+    are associated with trees.
+
+    EXAMPLES:
+    ::
+        sage: RootedTreeFunctionList(3)
+        [[0, 0, 0],
+         [1, 1, 0],
+         [0, 2, 0],
+         [0, 0, 1],
+         [1, 1, 1],
+         [2, 1, 1],
+         [2, 0, 2],
+         [1, 2, 2],
+         [2, 2, 2]]
+        
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Initialization of the identity matrix
+    Id=identity_matrix(sz)
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Initialization of the adjacency martrix of the functional graph
+        A = sum([Id[:,j]*Id[f[j],:] for j in range(sz)])
+        # Initialization of the dierected Laplacian
+        lA= diagonal_matrix((A*ones_matrix(A.nrows(),1)).list())-A
+        # Initialization of the list of sumbratrices
+        Lmtr=[Matrix(ZZ,sz-1,sz-1,[lA[u,v] for u in range(sz) for v in range(sz) if u!=t if v!=t]) for t in range(sz)]
+        # Testing treeness
+        if sum(A[t,t]*Lmtr[t].det() for t in range(sz)) == 1:
+            # Appending the function to the list
+            Lf.append(f)
+    return Lf
 
 def RootedTupleTreeFunctionList(sz):
     """
@@ -3810,18 +3246,230 @@ def RootedTupleTreeFunctionList(sz):
          [(0, 0), (1, 0), (2, 1)],
          [(0, 1), (1, 1), (2, 1)],
          [(0, 1), (1, 2), (2, 2)]]
+        sage: sz=3; X=var_list('x',sz+1); Y=var_list('y',sz+1); Z=var_list('z',sz+1); Ta=HM(sz+1,sz+1,'a'); A=HM(sz+1,sz+1,'zero'); DgA=[Ta[i,i] for i in rg(sz+1)]
+        sage: for i in rg(sz+1):
+        ....:     for j in rg(sz+1):
+        ....:         A[i,j]=Ta[i,j]*X[abs(j-i)]*prod(Y[u] for u in rg(min(i,j), max(i,j)))*prod(Z[u] for u in rg(1+min(i,j), 1+max(i,j)))
+        ....:
+        sage: sum(prod(A[t[0],t[1]] for t in tp) for tp in RootedTupleTreeFunctionList(sz))
+        a00*a10*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a01*a11*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a02*a10*a22*x0*x1*x2*y0^2*y1*z1^2*z2 + a00*a12*a20*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a11*a21*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a12*a22*x0*x1*x2*y0*y1^2*z1*z2^2 + a00*a10*a21*x0*x1^2*y0*y1*z1*z2 + a01*a11*a21*x0*x1^2*y0*y1*z1*z2 + a01*a12*a22*x0*x1^2*y0*y1*z1*z2
 
 
     AUTHORS:
     - Edinah K. Gnang
     """
-    # Initialization of the list of trees
-    L=TupleTreeFunctionList(sz)
-    Lf=[]
-    for tp in L:
-        Lf.append(tp)
-        for i in rg(1,sz):
-            Lf.append(switch_sink(tp,0,i))
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Initialization of the identity matrix
+    Id=identity_matrix(sz)
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Initialization of the adjacency martrix of the functional graph
+        A = sum([Id[:,j]*Id[f[j],:] for j in range(sz)])
+        # Initialization of the dierected Laplacian
+        lA= diagonal_matrix((A*ones_matrix(A.nrows(),1)).list())-A
+        # Initialization of the list of sumbratrices
+        Lmtr=[Matrix(ZZ,sz-1,sz-1,[lA[u,v] for u in range(sz) for v in range(sz) if u!=t if v!=t]) for t in range(sz)]
+        # Testing treeness
+        if sum(A[t,t]*Lmtr[t].det() for t in range(sz)) == 1:
+            # Appending the function to the list
+            Lf.append([(i, f[i]) for i in range(sz)])
+    return Lf
+
+def RootedTupleGracefulTreeFunctionList(sz):
+    """
+    Goes through all the functions and determines which ones
+    are associated with gracefully labeled trees.
+
+    EXAMPLES:
+    ::
+        sage: RootedTupleGracefulTreeFunctionList(3)
+        [[(0, 0), (1, 0), (2, 0)],
+         [(0, 1), (1, 1), (2, 0)],
+         [(0, 0), (1, 2), (2, 0)],
+         [(0, 0), (1, 0), (2, 1)],
+         [(0, 1), (1, 1), (2, 1)],
+         [(0, 2), (1, 1), (2, 1)],
+         [(0, 2), (1, 0), (2, 2)],
+         [(0, 1), (1, 2), (2, 2)],
+         [(0, 2), (1, 2), (2, 2)]]
+        sage: sz=3; X=var_list('x',sz+1); Y=var_list('y',sz+1); Z=var_list('z',sz+1); Ta=HM(sz+1,sz+1,'a'); A=HM(sz+1,sz+1,'zero'); DgA=[Ta[i,i] for i in rg(sz+1)]
+        sage: for i in rg(sz+1):
+        ....:     for j in rg(sz+1):
+        ....:         A[i,j]=Ta[i,j]*X[abs(j-i)]*prod(Y[u] for u in rg(min(i,j), max(i,j)))*prod(Z[u] for u in rg(1+min(i,j), 1+max(i,j)))
+        ....:
+        sage: sum(prod(A[t[0],t[1]] for t in tp) for tp in RootedTupleGracefulTreeFunctionList(sz))
+        a00*a10*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a01*a11*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a02*a10*a22*x0*x1*x2*y0^2*y1*z1^2*z2 + a00*a12*a20*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a11*a21*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a12*a22*x0*x1*x2*y0*y1^2*z1*z2^2 + a00*a10*a21*x0*x1^2*y0*y1*z1*z2 + a01*a11*a21*x0*x1^2*y0*y1*z1*z2 + a01*a12*a22*x0*x1^2*y0*y1*z1*z2
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Initialization of the identity matrix
+    Id=identity_matrix(sz)
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Initialization of the adjacency martrix of the functional graph
+        A = sum([Id[:,j]*Id[f[j],:] for j in range(sz)])
+        # Initialization of the dierected Laplacian
+        lA= diagonal_matrix((A*ones_matrix(A.nrows(),1)).list())-A
+        # Initialization of the list of sumbratrices
+        Lmtr=[Matrix(ZZ,sz-1,sz-1,[lA[u,v] for u in range(sz) for v in range(sz) if u!=t if v!=t]) for t in range(sz)]
+        # Testing treeness
+        if sum(A[t,t]*Lmtr[t].det() for t in range(sz)) == 1 and Set([abs(f[i]-i) for i in range(sz)]).cardinality() == sz:
+            # Appending the function to the list
+            Lf.append([(i,f[i]) for i in range(sz)])
+    return Lf
+
+def RootedTupleGracefulFunctionList(sz):
+    """
+    Goes through all the functions and determines which ones
+    are associated with gracefully labeled functional directed graphs.
+
+    EXAMPLES:
+    ::
+        sage: RootedTupleGracefulFunctionList(3)
+        [[(0, 0), (1, 0), (2, 0)],
+         [(0, 1), (1, 1), (2, 0)],
+         [(0, 0), (1, 2), (2, 0)],
+         [(0, 0), (1, 0), (2, 1)],
+         [(0, 1), (1, 1), (2, 1)],
+         [(0, 2), (1, 1), (2, 1)],
+         [(0, 2), (1, 0), (2, 2)],
+         [(0, 1), (1, 2), (2, 2)],
+         [(0, 2), (1, 2), (2, 2)]]
+        sage: sz=3; X=var_list('x',sz+1); Y=var_list('y',sz+1); Z=var_list('z',sz+1); Ta=HM(sz+1,sz+1,'a'); A=HM(sz+1,sz+1,'zero'); DgA=[Ta[i,i] for i in rg(sz+1)]
+        sage: for i in rg(sz+1):
+        ....:     for j in rg(sz+1):
+        ....:         A[i,j]=Ta[i,j]*X[abs(j-i)]*prod(Y[u] for u in rg(min(i,j), max(i,j)))*prod(Z[u] for u in rg(1+min(i,j), 1+max(i,j)))
+        ....:
+        sage: sum(prod(A[t[0],t[1]] for t in tp) for tp in RootedTupleGracefulFunctionList(sz))
+        a00*a10*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a01*a11*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a02*a10*a22*x0*x1*x2*y0^2*y1*z1^2*z2 + a00*a12*a20*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a11*a21*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a12*a22*x0*x1*x2*y0*y1^2*z1*z2^2 + a00*a10*a21*x0*x1^2*y0*y1*z1*z2 + a01*a11*a21*x0*x1^2*y0*y1*z1*z2 + a01*a12*a22*x0*x1^2*y0*y1*z1*z2
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Initialization of the identity matrix
+    Id=identity_matrix(sz)
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Testing Gracefulness
+        if Set([abs(f[i]-i) for i in range(sz)]).cardinality() == sz:
+            # Appending the function to the list
+            Lf.append([(i,f[i]) for i in range(sz)])
+    return Lf
+
+def NonIsomorphicRootedTreeFunctionList(sz):
+    """
+    Obtains representative equivalence classes of tuple
+    function rooted.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: NonIsomorphicRootedTreeFunctionList(4)
+        [[(0, 0), (1, 0), (2, 0), (3, 0)],
+         [(0, 1), (1, 1), (2, 0), (3, 0)],
+         [(0, 0), (1, 2), (2, 0), (3, 0)],
+         [(0, 2), (1, 1), (2, 1), (3, 0)]]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of permutations
+    L=[T2SP(T) for T in RootedTupleTreeFunctionList(sz)]
+    # Initialization of the list storing the equivalence class of trees.
+    cL=[ L[0] ]
+    # Loop perfomring the isomorphism binning.
+    for s in L:
+        nwT=True
+        for i in range(len(cL)):
+            if T2DiGraphII([(j,j+s[j]) for j in range(sz)],sz).is_isomorphic(T2DiGraphII([(j,j+cL[i][j]) for j in range(sz)],sz)):
+                nwT=False
+                break
+        if nwT==True:
+            cL.append(s)
+    return [SP2T(sg) for sg in cL]
+
+def GracefulTupleFunctionList(sz):
+    """
+    Returns list of edge tuple desctiption for all 
+    functional derected graphs.
+
+
+    EXAMPLES:
+    ::
+        sage:GracefulTupleFunctionList(3)
+        [[(0, 0), (1, 0), (2, 0), (3, 0)],
+         [(0, 1), (1, 1), (2, 0), (3, 0)],
+         [(0, 0), (1, 2), (2, 0), (3, 0)],
+         [(0, 2), (1, 1), (2, 1), (3, 0)],
+         [(0, 0), (1, 3), (2, 1), (3, 0)],
+         [(0, 2), (1, 0), (2, 2), (3, 0)],
+         [(0, 2), (1, 2), (2, 2), (3, 0)],
+         [(0, 1), (1, 3), (2, 2), (3, 0)],
+         [(0, 2), (1, 1), (2, 3), (3, 0)],
+         [(0, 0), (1, 3), (2, 3), (3, 0)],
+         [(0, 3), (1, 1), (2, 1), (3, 1)],
+         [(0, 3), (1, 0), (2, 2), (3, 1)],
+         [(0, 3), (1, 2), (2, 2), (3, 1)],
+         [(0, 3), (1, 1), (2, 3), (3, 1)],
+         [(0, 3), (1, 1), (2, 0), (3, 2)],
+         [(0, 3), (1, 3), (2, 2), (3, 2)],
+         [(0, 3), (1, 0), (2, 0), (3, 3)],
+         [(0, 3), (1, 2), (2, 0), (3, 3)],
+         [(0, 3), (1, 3), (2, 1), (3, 3)],
+         [(0, 3), (1, 3), (2, 3), (3, 3)]]
+
+
+    AUTHORS:
+
+    - Edinah K. Gnang
+    """
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Appending the function to the list
+        if Set([abs(j-f[j]) for j in rg(sz)]) == Set(rg(sz)):
+            Lf.append([(j,f[j]) for j in rg(sz)])
     return Lf
 
 def PseudoTreeFunctionList(n):
@@ -4080,69 +3728,6 @@ def GracefulK_arryDiTreeList(n,K):
         Rslt.append([TmpL,l[1]])
     return Rslt
 
-def NodeSplittingK_arryTreesList(T, nbv, K):
-    """
-    The method returns list of functions
-    tuples corresponding to gracefully labeled
-    trees on at most nbv+1 vertices and have 
-    vertices of degree not exceeding K.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: L=NodeSplittingK_arryTreesList([(0, 0), (1, 0), (2, 0)], 4, 3); L
-        [[(0, 0), (1, 0), (2, 0)],
-         [(0, 0), (1, 0), (2, 0), (3, 0)],
-         [(0, 0), (1, 3), (2, 1), (3, 0)],
-         [(0, 0), (1, 0), (2, 4), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 4), (4, 0)],
-         [(0, 0), (1, 4), (2, 1), (3, 1), (4, 0)],
-         [(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)],
-         [(0, 0), (1, 4), (2, 0), (3, 2), (4, 0)],
-         [(0, 0), (1, 4), (2, 4), (3, 2), (4, 0)]]
-        sage: for i in range(len(L)):
-        ....:     T2DiGraph(L[i]).plot().save(str(i)+'.png')
-        ....:
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    return [SP2T(l) for l in NodeSplittingK_arrySignedPermutationList(T2SP(T), nbv, K)]
-
-def GracefulK_arryDiTreeNodeSplittingList(T, nbv, K):
-    """
-    Starts from the input tree T and performs the node splitting routines
-    untill to obtain all K_arry tree (all vertices have degree not exceeding
-    by K) on at most nbv+1 vertices.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: t=0
-        sage: for dg in GracefulK_arryDiTreeNodeSplittingList([(0, 0), (1, 0)], 2, 2):
-        ....:     dg.plot().save(str(t)+'.png')
-        ....:     t=t+1
-        ....:
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list of directed graph as edge list.
-    L=NodeSplittingK_arryTreesList(T, nbv, K)
-    # Initialization of the list storing the result
-    Rslt=[]
-    for lt in L:
-        # Initialization of the identity matrix
-        Id=identity_matrix(len(lt))
-        Rslt.append(DiGraph(sum([Id[:,t[0]]*Id[t[1],:] for t in lt])))
-    return Rslt
-
 def K_arryTreeSignedPermutationClasses(n, K):
     """
     Obtains representative equivalence classes of 
@@ -4178,63 +3763,6 @@ def K_arryTreeSignedPermutationClasses(n, K):
         nwT=True
         for i in range(len(cL)):
             if T2Graph([(j,j+s[j]) for j in range(n)]).is_isomorphic(T2Graph([(j,j+cL[i][j]) for j in range(n)])):
-                nwT=False
-                break
-        if nwT==True and Set(SignedPermutationListDegreeSequence(s)).issubset(Set(range(1,K+1))):
-            cL.append(s)
-    return cL
-
-def K_arryNodeSplittingSignedPermutationClasses(nbv, K):
-    """
-    Obtain representatives of equivalence classes of signed function
-    defined by the isomorphism classes of associated trees obtained
-    via node splittings. The tree isomorphism function is doing the
-    heavy lifting here.  The difference with the implementation above 
-    is that only one tree is stored per equivalence classes.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: K_arryNodeSplittingSignedPermutationClasses(4, 2)
-        [[0, 2, -1, -3]] 
-         
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list implementation
-    # of binary tree storing the graceful graphs
-    # whose degree sequence are lexicographically 
-    # smaller then that of the second input tree T2.
-    L=[[0,-1]]
-    # Initialization of the indexing variable
-    indx=0
-    while len(L[indx]) <= nbv:
-        L.append(LeftSignedPermutation(L[indx]))
-        TmpL=MiddleSignedPermutationsI(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        TmpL=MiddleSignedPermutationsII(L[indx])
-        for t in TmpL:
-            if not t in L:
-                L.append(t) 
-        L.append(RightSignedPermutation(L[indx]))
-        indx=indx+1
-    TmpL=[l for l in L if len(l)==nbv]; L=TmpL
-    # Initialization of the list storing the equivalence class of trees.
-    #cL=[ L[0] ]
-    if Set(SignedPermutationListDegreeSequence(L[0])).issubset(Set(range(1,K+1))): 
-        cL=[ L[0] ]
-    else:
-        cL=[ ]
-    # Loop perfomring the isomorphism binning.
-    for s in L:
-        nwT=True
-        for i in range(len(cL)):
-            if SP2Graph(s).is_isomorphic(SP2Graph(cL[i])):
                 nwT=False
                 break
         if nwT==True and Set(SignedPermutationListDegreeSequence(s)).issubset(Set(range(1,K+1))):
@@ -4278,7 +3806,7 @@ def Isomorphic_SignedPermutationList(L0,L1):
 def TupleSubgraphList(T,k):
     """
     Returns a list of tuple description of subgraph on
-    k vertices.
+    k vertices. Ignores loop edges.
     
 
     EXAMPLES:
@@ -5075,6 +4603,28 @@ def TupleLabelInvolution(T):
     """
     return [(0, 0)]+[(len(T)-1-T[i][0], len(T)-1-T[i][1]) for i in range(len(T)-2,0,-1)]+[(len(T)-1,0)]
 
+def TupleLabelInvolutionII(T):
+    """
+    Returns the tuple encoding of the involuted labeling
+    This implementation does not assume that the tuple is rooted at 0.
+
+    EXAMPLES:
+
+    ::
+
+        sage: T=[(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)]
+        sage: TupleLabelInvolutionII(T)
+        [(0, 4), (1, 4), (2, 0), (3, 2), (4, 4)]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    sz=len(T)
+    tp=[(sz-1-t[0], sz-1-t[1]) for t in T]
+    tp.sort()
+    return tp
+
 def SignedPermutationLabelInvolution(s):
     """
     Returns the signed permutations encoding of the involuted labeling
@@ -5157,95 +4707,6 @@ def incidenceHMII(T):
     Eq=[(Tuple2EdgeList(Tp,'x'))[i] == Y[i] for i in range(sz-1)]+[0*X[sz-1] == Y[sz-1]]
     return ConstraintFormatorHM(Eq,X)[0]
 
-def node_splittingI(L):
-    """
-    Returns a list of 2^(|L|+1) gracefully labeled graphs on |L|+1 vertices.
-    the graphs are described as edge list. Does not check to see if the input
-    graph is gracefully labled.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: node_splittingI([(0,0)])
-        [[(0, 1)], [(1, 0)]]
-        sage: L = node_splittingI([(0, 1), (0, 2)])
-        sage: T2GraphII(L[0],4).degree_sequence()
-        [2, 2, 1, 1] 
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Setting up the base case
-    if len(L) == 1 and L == [(0, 0)]:
-        return [[(0, 1)], [(1, 0)]]
-    # Setting up the induction
-    else:
-        # Initialization of the list collecting all the graphs
-        Lg=[]
-        # Add one to all the vertex labels
-        St=Set([(tp[0]+1, tp[1]+1) for tp in L])
-        for s in St.subsets():
-            # Deleting the subset s of vertices
-            TpSt=St.difference(s)
-            # Splitting the vertex labeled 0 and adding back the self loop
-            TpSt=TpSt.union( Set( [(0, len(L)+1)] )  )
-            # Initilization of the differences
-            dfL=Set([abs(tp[1]-tp[0]) for tp in TpSt])
-            for i in rg(1,len(L)+2):
-                if not i in dfL:
-                    TpSt=TpSt.union(Set([(0, i)]))
-            # Initialization of the edge lists
-            edgL=TpSt.list(); edgL.sort()
-            Lg=Lg+[edgL, [(1+len(L)-tp[0], 1+len(L)-tp[1]) for tp in edgL]]
-        return Lg
-
-def node_splittingII(L):
-    """
-    Returns a list of 2^(|L|+1) gracefully labeled graphs on |L|+1 vertices.
-    the graphs are described as edge list. Does not check to see if the input
-    graph is gracefully labled.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: node_splittingII([(0,0)])
-        [[(0, 1)], [(1, 0)]]
-        sage: L = node_splittingII( [(2, 0), (1, 0)])
-        sage: T2GraphII(L[0],4).degree_sequence()
-        [3, 1, 1, 1] 
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Setting up the base case
-    if len(L) == 1 and L == [(0, 0)]:
-        return [[(0, 1)], [(1, 0)]]
-    # Setting up the induction
-    else:
-        # Initialization of the list collecting all the graphs
-        Lg=[]
-        St=Set(L)
-        for s in St.subsets():
-            # Deleting the subset s of vertices
-            TpSt=St.difference(s)
-            # Splitting the vertex labeled 0 and adding back the self loop
-            TpSt=TpSt.union( Set( [(0, len(L)+1)] )  )
-            # Initilization of the differences
-            dfL=Set([abs(tp[1]-tp[0]) for tp in TpSt])
-            for i in rg(1,len(L)+2):
-                if not i in dfL:
-                    TpSt=TpSt.union(Set([(1+len(L)-i,1+len(L))]))
-            # Initialization of the edge lists
-            edgL=TpSt.list(); edgL.sort()
-            Lg=Lg+[edgL, [(1+len(L)-tp[0], 1+len(L)-tp[1]) for tp in edgL]]
-        return Lg
-
 def adjacency_polynomial_constructionIa(X, tp):
     """
     Returns the polynomial adjacency polynomial construction over roots of
@@ -5291,7 +4752,7 @@ def adjacency_polynomial_constructionIb(X, tp):
     """
     Returns the adjacency polynomial construction over roots of unity 
     which certifies the existence of a graceful labeling. The inputs
-    to the functions are the list of variables associaated with 
+    to the functions are the list of variables associated with 
     vertices and a tuple edge list decription of the input graph.
 
 
@@ -6328,7 +5789,8 @@ def Monomial2T(mnm, VrbL, sz):
     """
     Outputs the tuple edge list description of the input monomial mnm.
     The variables are obtain by listing the entries of a hypermatrix.
-
+    This function returns pairs of vertex bales corresponding to the
+    edges where each pair is in non-decreasing order.
 
 
     EXAMPLES:
@@ -6609,11 +6071,48 @@ def tpl_image_set(tp):
     L=Set([t[1] for t in tp]).list(); L.sort()
     return L
 
+def tpl_vertex_bipartition(tp):
+    """
+    returns the vertex bipartition associated with a tree
+    
+
+    EXAMPLES:
+
+    ::
+
+        sage: tpl_vertex_bipartition([(0, 1), (1, 2), (2, 3), (4, 4)])
+        [[4, 2, 0], [3, 1]]
+        
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    sz=len(tp)
+    # Initialization of the root node
+    i=find_sink(tp)
+    # Initialization of the bipartite partition
+    lL=[i]; rL=[j for j in tpl_pre_image_set(tp,i) if j !=i]
+    TplL=copy(lL); TprL=copy(rL)
+    while len(lL+rL) < sz:
+        TtplL=[]
+        for v in TprL:
+            TtplL=TtplL+tpl_pre_image_set(tp,v)
+        lL=lL+TtplL; TplL=copy(TtplL)
+        #print 'lL=',lL
+        TtprL=[]
+        for v in TplL:
+            TtprL=TtprL+tpl_pre_image_set(tp,v)
+        rL=rL+TtprL; TprL=copy(TtprL)
+        #print 'rL=',rL
+    return [lL,rL]
+
 def FindTreeTupleComponents(T):
     """
     Returns a tuple list each of which corresponds to a pair
     made up of a vertex and the associated sink vertex.
     This implementation assume the input is a tree.
+    This implementation assume that the given tree is
+    rooted at 0
 
 
     EXAMPLES:
@@ -6640,7 +6139,63 @@ def FindTreeTupleComponents(T):
             raise ValueError, "Expected a tree"
     return C
 
-def switch_sink(Tn, a, alpha):
+def FindTreeTupleComponentsII(T):
+    """
+    Returns a tuple list each of which corresponds to a pair
+    made up of a vertex and the associated sink vertex.
+    This implementation assume the input is a tree.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: FindTreeTupleComponentsII([(0, 0), (1, 2), (2, 4), (3, 7), (4, 4), (5, 0), (6, 0), (7, 0)])
+        [(0, 0), (1, 4), (2, 4), (3, 0), (4, 4), (5, 0), (6, 0), (7, 0)]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Classifying the vertices
+    C=[(find_sink(T),find_sink(T))]
+    Rg=rg(len(T)); Rg.remove(find_sink(T))
+    for j in Rg:
+        i=j; cnt=0
+        while T[i][1] != T[i][0] and cnt <= len(T)+1:
+            i=T[i][1]; cnt=cnt+1
+        if T[i][1] == T[i][0]:
+            C.append((j,T[i][0]))
+        else:
+            raise ValueError, "Expected a tree"
+    C.sort()
+    return C
+
+def find_sink(tp):
+    """
+    Finds the sink (also called root of a functional tree).
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: find_sink([(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)])
+        
+
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    T=[(tp[i][0],tp[i][1]) for i in tpl_image_set(tp)]
+    for i in rg(len(tp)):
+        T=[(tp[i][0],tp[i][1]) for i in tpl_image_set(T)]
+    return T[0][0]
+
+def switch_sink(Tn, alpha):
     """
     Switches the sink from a to alpha in the tree
     
@@ -6651,7 +6206,7 @@ def switch_sink(Tn, a, alpha):
     ::
 
 
-        sage: switch_sink([(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)], 0, 1)
+        sage: switch_sink([(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)], 1)
         [(0, 3), (1, 1), (2, 1), (3, 1), (4, 0)]
 
 
@@ -6659,30 +6214,37 @@ def switch_sink(Tn, a, alpha):
     AUTHORS:
     - Edinah K. Gnang
     """
-    # The new sink will be alpha instead of a
-    Tp=[]
-    # Obtaining the spine made up of the path from alpha to a
-    Snk=[]; i=alpha; Tp.append((alpha, alpha))
-    while Tn[i][0] != a and Tn[i][1] != a:
+    a = find_sink(Tn)
+    if a==alpha:
+        return Tn
+    else:
+        # The new sink will be alpha instead of a
+        Tp=[]
+        # Obtaining the spine made up of the path from alpha to a
+        Snk=[]; i=alpha; Tp.append((alpha, alpha))
+        while Tn[i][0] != a and Tn[i][1] != a:
+            Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][0])
+            i=Tn[i][1]
+            #print 'Tp=',Tp
         Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][0])
-        i=Tn[i][1]
-    Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][0])
-    Snk.append(Tn[i][1])
-    #print 'Snk=',Snk
-    # Partioning the vertices of Tn by components
-    C=FindTreeTupleComponents(Tn)
-    # Initialization of the list of vertices in the partition a
-    Sa=Set([C[i][0] for i in range(len(Tn)) if C[i][1]==a])
-    # Correcting the orrientation of the remaining edges
-    while Set(Snk) != Sa:
-        for i in Sa:
-            if (Tn[i][0] in Snk) and (Tn[i][1] not in Snk):
-                Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][1])
-            elif (Tn[i][0] not in Snk) and (Tn[i][1] in Snk):
-                Tp.append((Tn[i][0], Tn[i][1])); Snk.append(Tn[i][0])
-    # Sorting the list
-    Tp.sort()
-    return Tp
+        Snk.append(Tn[i][1])
+        #print 'Snk=',Snk
+        # Partioning the vertices of Tn by components
+        C=FindTreeTupleComponentsII(Tn)
+        #print 'C=',C
+        # Initialization of the list of vertices in the partition a
+        Sa=Set([C[i][0] for i in range(len(Tn)) if C[i][1]==a])
+        #print 'Sa=',Sa
+        # Correcting the orrientation of the remaining edges
+        while Set(Snk) != Sa:
+            for i in Sa:
+                if (Tn[i][0] in Snk) and (Tn[i][1] not in Snk):
+                    Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][1])
+                elif (Tn[i][0] not in Snk) and (Tn[i][1] in Snk):
+                    Tp.append((Tn[i][0], Tn[i][1])); Snk.append(Tn[i][0])
+        # Sorting the list
+        Tp.sort()
+        return Tp
 
 def graph_function_orbit(T):
     """
@@ -6706,7 +6268,7 @@ def graph_function_orbit(T):
     - Edinah K. Gnang
     """
     # Initialization of the list of permutations
-    L=[T]+[switch_sink(T, 0, i) for i in rg(1,len(T))]
+    L=[T]+[switch_sink(T, i) for i in rg(1,len(T))]
     # Initialization of the list storing the equivalence class of trees.
     cL=[ L[0] ]
     # Loop perfomring the isomorphism binning.
@@ -6935,6 +6497,52 @@ def mPer(A,tq):
             f=f+prod([A[j, q[tp[qi[j]][1]-1]] for j in range(sz)])
     return f
 
+def GrLmPer(A,tq):
+    """
+    Computes symbolically the partial modified permanent by summing only over
+    representatives of the coeset and graceful labelings.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=4; L=[[(0,0)]+[(i+1,l[i]) for i in rg(len(l))] for l in TreeFunctionList(sz)]; tp=L[1]
+        sage: A=HM(sz,sz,'a').elementwise_product(HM(sz,sz,[x^(sz^abs(j-i)) for j in rg(sz) for i in rg(sz)]))
+        sage: GrLmPer(A,tp)
+        a00*a12*a20*a30*x^85 + a02*a12*a22*a30*x^85 + a03*a11*a21*a31*x^85 + a03*a13*a21*a33*x^85
+        sage: sz=4; GrLmPer(HM(sz,sz,'a'), [(i,0) for i in rg(sz)])
+        a00*a10*a20*a30 + a03*a13*a23*a33
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    sz=A.n(0)
+    tp=[(1+tq[i][0], 1+tq[i][1]) for i in rg(len(tq))]
+    # Initializing the permutations
+    P = Permutations(sz); S=SymmetricGroup(sz)
+    # Initializing the graph
+    grph=T2DiGraphII(tp, sz+1)
+    # Initializing the automorphism group
+    AutGrp=grph.automorphism_group()
+    # Initializing representatives of Left coset as strings
+    Lcstr=[CstL[0].cycle_string() for CstL in S.cosets(AutGrp)]
+    # Loop enumerating the number of graceful labelings
+    fctr=0
+    # Initialization of the function
+    f=0
+    for p in P:
+        if p.cycle_string() in Lcstr:
+            # Initializing the inverse
+            pinv=p.inverse()
+            # fixing the permutations index
+            q =[p[i]-1 for i in rg(sz)]
+            qi=[pinv[i]-1 for i in rg(sz)]
+            if len(Set([abs(j-q[tp[qi[j]][1]-1]) for j in rg(sz)]).list())==sz:
+                f=f+prod([A[j,q[tp[qi[j]][1]-1]] for j in range(sz)])
+    return f
+
 def mDet(A,tq):
     """
     Computes symbolically the partial modified permanent by summing only over
@@ -6980,4 +6588,804 @@ def mDet(A,tq):
             qi=[pinv[i]-1 for i in rg(sz)]
             f=f+SgnTp([(i, q[tp[qi[i]][1]-1]) for i in rg(sz)])*prod([A[j, q[tp[qi[j]][1]-1]] for j in range(sz)])
     return f
+
+def Permutation2pseudoTuple(M):
+    """
+    Returns list of edge tuple desctiption associated with the 
+    input permutation. The encoding is based on the diagonals
+
+
+    EXAMPLES:
+    ::
+        sage: Permutation2pseudoTuple(HM([[1,0,0],[0,1,0],[0,0,1]]))
+        [[(0, 0)], [(0, 1), (1, 0)], [(2, 0), (0, 2)]]
+        sage: Permutation2pseudoTuple(HM([[0,0,1],[0,1,0],[1,0,0]]))
+        [[(2, 2)], [(1, 2), (2, 1)], [(2, 0), (0, 2)]]
+
+
+    AUTHORS:
+
+    - Edinah K. Gnang
+    """
+    # Initialization of running edge weight parameter and the Tuple list
+    edgw=0; tp=[]
+    while M.n(0) > 1:
+        for i in rg(M.n(0)):
+            if M[0,i] == 1:
+                M=SecondOrderSlicer(SecondOrderSlicer(M, [j  for j in rg(1,M.n(0))], 'row'), [k for k in rg(M.n(1)) if k != i], 'col')
+                if edgw == 0:
+                    tp.append([(i, i+edgw)])
+                else:
+                    tp.append([(i, i+edgw), (i+edgw, i)])
+                edgw=edgw+1
+                break
+    tp.append([(edgw,0), (0,edgw)])
+    return tp
+
+def Tuple2pseudoTuple(tp):
+    """
+    Returns list of unidrected edge tuple desctiption associated with the 
+    input tuple.
+
+
+    EXAMPLES:
+    ::
+        sage: Tuple2pseudoTuple([(0, 0), (1, 0), (2, 0)])
+        [[(0, 0)], [(1, 0), (0, 1)], [(2, 0), (0, 2)]]
+        sage: Tuple2pseudoTuple([(0, 2), (1, 2), (2, 2)])
+        [[(2, 2)], [(1, 2), (2, 1)], [(0, 2), (2, 0)]]
+
+
+
+    AUTHORS:
+
+    - Edinah K. Gnang
+    """
+    # Initialization of the pseudo tuple list
+    psdT = []
+    for i in rg(len(tp)):
+        if tp[i][0]==tp[i][1]:
+            psdT.append([(tp[i][0],tp[i][1])])
+        else:
+            psdT.append([(tp[i][0], tp[i][1]), (tp[i][1], tp[i][0])])
+    T=[]
+    for i in rg(len(tp)):
+        for j in rg(len(tp)):
+            if abs(psdT[j][0][0]-psdT[j][0][1]) == i:
+                T.append(psdT[j])
+    return T
+
+def PseudoTuple2Permutation(psdT):
+    """
+    Returns a permutation matrix associated with list of edge specified as a pseudo tuple edge list.
+
+
+    EXAMPLES:
+    ::
+        sage: PseudoTuple2Permutation([[(0, 0)], [(0, 1), (1, 0)], [(2, 0), (0, 2)]])
+        [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        sage: PseudoTuple2Permutation([[(2, 2)], [(1, 2), (2, 1)], [(2, 0), (0, 2)]])
+        [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
+        sage: PseudoTuple2Permutation([[(1, 1)], [(1, 2), (2, 1)], [(2, 0), (0, 2)]])
+        [[0, 1, 0], [0, 0, 1], [1, 0, 0]]
+
+
+    AUTHORS:
+
+    - Edinah K. Gnang
+    """
+    # Initialization of the input matrix
+    M=HM(len(psdT),len(psdT),'zero'); M[0,psdT[0][0][0]]=1
+    # Initialization of the forbiden index
+    allowed_row_index=rg(1,len(psdT))
+    #print 'allowed_row_index =', allowed_row_index
+    allowed_col_index=[i for i in rg(len(psdT)) if i != psdT[0][0][0]]
+    #print 'allowed_col_index =', allowed_col_index
+    # Initialization fo the counter
+    for indx in rg(1,len(psdT)):
+        #print 'indx = ', indx
+        M[indx, allowed_col_index[min(psdT[indx][0])]]=1
+        # Updating the allowable indices
+        allowed_row_index.remove(indx)
+        #print 'allowed_row_index =', allowed_row_index
+        allowed_col_index.remove(allowed_col_index[min(psdT[indx][0])])
+        #print 'allowed_col_index =', allowed_col_index
+    return M
+
+def pseudoTuple2Graph(T):
+    """
+    The method returns an undirected graph object associated with 
+    with the pseudo tuple list description of the directed graph
+
+    EXAMPLES:
+
+    ::
+
+        sage: pseudoTuple2Graph([[(0, 0)], [(0, 1), (1, 0)], [(2, 0), (0, 2)]]).degree_sequence()
+        [4, 1, 1]
+        
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the identity matrix
+    Id=identity_matrix(len(T))
+    return Graph(sum(sum(Id[:,t[0]] * Id[t[1],:] for t in Lt) for Lt in T))
+
+def ConjugateGraphTerm(tp, p, A):
+    """
+    Performs the conjugation of the graph via the
+    permutation p in the graph specified by the
+    input tuple edge list tp. Note that p is a list
+    of index starting from 1 and not from zero.
+    objects returned by Permutations(len(tp)) as a result
+    the index are shifted by one the code fixes this.
+
+
+
+    EXAMPLES:
+    ::
+
+
+        sage: sz=4; p=Permutations(sz)[3]; A=HM(sz,sz,'a')
+        sage: ConjugateGraphTerm([(0,1), (1,2), (2,3), (3,3)], p, A)
+        a02*a11*a23*a31
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of primes
+    sz=len(tp)
+    # Initialization of the inverse
+    return prod(A[j,p[tp[p.inverse()[j]-1][1]]-1] for j in rg(sz))
+
+def ConjugateGraphTermII(tp, p, A):
+    """
+    Performs the conjugation of the graph via the
+    permutation p in the graph specified by the
+    input tuple edge list tp. Note that p is a list
+    of index starting from 1 and not from zero.
+    objects returned by Permutations(len(tp)) as a result
+    the index are shifted by one the code fixes this.
+
+
+
+    EXAMPLES:
+    ::
+
+
+        sage: sz=4; p=[0, 2, 3, 1]; A=HM(sz,sz,'a')
+        sage: ConjugateGraphTermII([(0,1), (1,2), (2,3), (3,3)], p, A)
+        a02*a11*a23*a31
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of primes
+    sz=len(tp)
+    return prod(A[p[tp[j][0]],p[tp[j][1]]] for j in rg(sz))
+
+def Polynomial_Construction(tq, A, B):
+    """
+    Implements the polynomial construction associated
+    with the strong form of the graceful labeling conjecture
+    it also enables us to check the symmetry property. The 
+    input tq is rooted tree tuple.
+
+
+    EXAMPLES:
+    ::
+
+
+        sage: sz=3; tq=[(i, 0) for i in rg(sz)]; A=HM(sz,sz,'a')
+        sage: Polynomial_Construction(tq, A, A)
+        (a00*a10*a20 - a01*a11*a20)*(a00*a10*a20 - a00*a12*a20)*(a00*a10*a20 - a00*a10*a21)*(a00*a10*a20 - a02*a11*a21)*(a00*a10*a20 - a02*a10*a22)*(a00*a10*a20 - a01*a12*a22) - (a01*a11*a20 - a01*a11*a21)*(a00*a12*a20 - a01*a11*a21)*(a00*a10*a21 - a01*a11*a21)*(a01*a11*a21 - a02*a11*a21)*(a01*a11*a21 - a02*a10*a22)*(a01*a11*a21 - a01*a12*a22) + (a01*a11*a20 - a02*a12*a22)*(a00*a12*a20 - a02*a12*a22)*(a00*a10*a21 - a02*a12*a22)*(a02*a11*a21 - a02*a12*a22)*(a02*a10*a22 - a02*a12*a22)*(a01*a12*a22 - a02*a12*a22)
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of all functional directed graphs and the corresponding monomials
+    sz=len(tq); FnL=NonIsomorphicRootedTreeFunctionList(sz)
+
+    # Initialization of the list of permutations
+    P=Permutations(sz); S=SymmetricGroup(sz)
+   
+    # Initializing the graph
+    grph1=T2DiGraphII([(tq[i][0]+1, tq[i][1]+1) for i in rg(sz)], sz+1)
+    # Initializing the automorphism group
+    AutGrp1=grph1.automorphism_group()
+    # Initializing representatives of Left coset as strings
+    Lcstr1=[CstL[0].cycle_string() for CstL in S.cosets(AutGrp1)]
+
+    # Initialization of the function which will store the polynomial
+    f=0
+    for q in P:
+        if q.cycle_string() in Lcstr1:
+            for tp in FnL:
+                # Initializing the graph
+                grph2=T2DiGraphII([(tp[i][0]+1, tp[i][1]+1) for i in rg(sz)], sz+1)
+                # Initializing the automorphism group
+                AutGrp2=grph2.automorphism_group()
+                # Initializing representatives of Left coset as strings
+                Lcstr2=[CstL[0].cycle_string() for CstL in S.cosets(AutGrp2)]
+                # Initialization of the multiplicative factor polynomial
+                g=1
+                for p in P:
+                    if p.cycle_string() in Lcstr2:
+                        g=g*( ConjugateGraphTerm(tq, q, A) - ConjugateGraphTerm(tp, p, B) )
+                f=f+g 
+    return f
+
+def Polynomial_ConstructionII(tq, A, B):
+    """
+    Implements the polynomial construction
+    to check the symmetry property. tq is
+    rooted tree tuple. The difference with
+    the previous function is that the functional
+    star trees are removed from the sum
+    in order to investigate subtle differences
+    betwen the functional star trees and the 
+    functional pseudo star trees.
+
+
+    EXAMPLES:
+    ::
+
+
+        sage: sz=5; tq=[(i,0) for i in rg(sz-1)]+[(sz-1, sz-2)]; tp=[(sz-1-i,sz-1) for i in rg(sz-1)]+[(0,1)]; A=HM(sz,sz,'a')
+        sage: f=Polynomial_Construction(tq, A, A); g=Polynomial_ConstructionII(tp, A, A)
+        sage: (f-g).is_zero()
+        False
+
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of all functional directed graphs and the corresponding monomials
+    sz=len(tq); FnL=[T for T in NonIsomorphicRootedTreeFunctionList(sz) \
+if not (mPerII(HM(sz,sz,[x^(sz^abs(i-j)) for j in rg(sz) for i in rg(sz)]),T) - \
+mPerII(HM(sz,sz,[x^(sz^abs(i-j)) for j in rg(sz) for i in rg(sz)]),[(i,0) for i in rg(sz)])).is_zero()]
+    
+    # Initialization of the list of permutations
+    P=Permutations(sz); S=SymmetricGroup(sz)
+   
+    # Initializing the graph
+    grph1=T2DiGraphII([(tq[i][0]+1, tq[i][1]+1) for i in rg(sz)], sz+1)
+    # Initializing the automorphism group
+    AutGrp1=grph1.automorphism_group()
+    # Initializing representatives of Left coset as strings
+    Lcstr1=[CstL[0].cycle_string() for CstL in S.cosets(AutGrp1)]
+
+    # Initialization of the function which will store the polynomial
+    f=0
+    for q in P:
+        if q.cycle_string() in Lcstr1:
+            for tp in FnL:
+                # Initializing the graph
+                grph2=T2DiGraphII([(tp[i][0]+1, tp[i][1]+1) for i in rg(sz)], sz+1)
+                # Initializing the automorphism group
+                AutGrp2=grph2.automorphism_group()
+                # Initializing representatives of Left coset as strings
+                Lcstr2=[CstL[0].cycle_string() for CstL in S.cosets(AutGrp2)]
+                # Initialization of the multiplicative factor polynomial
+                g=1
+                for p in P:
+                    if p.cycle_string() in Lcstr2:
+                        g=g*( ConjugateGraphTerm(tq, q, A) - ConjugateGraphTerm(tp, p, B) )
+                f=f+g 
+    return f
+
+def comp(tp, tq):
+    """
+    Performs the composition of functions. The inputs to this method
+    are two tuple lists of the same size. The current version does
+    not check that the list are in fact of the same size.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: tp=[(0,1), (1,2), (2,3), (3,0)]; tq=[(0,0), (1,0), (2,0), (3,0)]
+        sage: comp(tp, tq)
+        [(0, 1), (1, 1), (2, 1), (3, 1)]
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the size parameter
+    return [(i,tp[tq[i][1]][1]) for i in rg(len(tp))]
+
+def gcomp(tp, tq):
+    """
+    Performs the absolute difference composition of functions
+    the inputs to the function are two tuple lists of the same
+    size. The current version does not check that the list are
+    in fact of the same size.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: tp=[(0,1), (1,2), (2,3), (3,0)]; tq=[(0,0), (1,0), (2,0), (3,0)]
+        sage: gcomp(tp, tq)
+        [(0, 1), (1, 2), (2, 3), (3, 0)]
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the size parameter
+    sz=len(tq); tr=[(i,i) for i in rg(sz)]
+    # Updating the composition
+    for i in rg(sz):
+        tr[abs(tq[i][1]-tq[i][0])] = (abs(tq[i][0]-tq[i][1]), tp[abs(tq[i][0]-tq[i][1])][1])
+    return tr
+
+def tree_conjugation(sz):
+    """
+    Runs the conjugation algorithm to produce the orbit
+    of trees which admit a graceful labeling. The algorithm
+    returns the list of monomial obtained in the orbit
+    and the polynomial on which the conjugation is being
+    performed
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=4; [LtRm, Fa] = tree_conjugation(sz)
+        sage: len(LtRm)
+        64
+        sage: Fa
+        a00*a10*a20*a30*x^85 + a01*a11*a20*a30*x^85 + a00*a12*a20*a30*x^85 + a02*a11*a21*a30*x^85 + a00*a13*a21*a30*x^85 + a02*a10*a22*a30*x^85 + a02*a12*a22*a30*x^85 + a00*a13*a23*a30*x^85 + a03*a11*a21*a31*x^85 + a03*a12*a22*a31*x^85 + a03*a11*a23*a31*x^85 + a03*a13*a22*a32*x^85 + a03*a10*a20*a33*x^85 + a03*a12*a20*a33*x^85 + a03*a13*a21*a33*x^85 + a03*a13*a23*a33*x^85 + a00*a10*a21*a31*x^25 + a01*a11*a21*a31*x^25 + a01*a12*a22*a31*x^25 + a00*a10*a23*a31*x^25 + a01*a11*a23*a31*x^25 + a00*a10*a20*a32*x^25 + a01*a11*a20*a32*x^25 + a00*a12*a20*a32*x^25 + a02*a11*a21*a32*x^25 + a02*a10*a22*a32*x^25 + a02*a12*a22*a32*x^25 + a01*a13*a22*a32*x^25 + a01*a13*a21*a33*x^25 + a02*a10*a23*a33*x^25 + a02*a12*a23*a33*x^25 + a01*a13*a23*a33*x^25
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the order parameter
+    od=2
+    # Initialization of the variables
+    x=var('x')
+    # Initialization of the second order hypermatrices
+    TpA=HM(sz,sz,'a'); X=HM(sz,sz,[x^(sz^abs(j-i)) for j in rg(sz) for i in rg(sz)])
+    A=TpA.elementwise_product(X)
+    # Initialization of the list of monomials associated with induced edge labelings of the star
+    Lm=[prod(x^(sz^abs(t-i)) for i in rg(sz)) for t in rg(ceil(sz/2))]
+    #print 'p = ', rg(1,sz+1)
+    # Initialization of the polynomials and the list which will store the trees
+    Fa=0; La=[]; LtRm=[]
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Initialization of the identity matrix
+    Id=HM(od,sz,'kronecker')
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Initialization of the adjacency martrix of the functional graph
+        B = Matrix2HM(sum([Id.matrix()[:,j]*Id.matrix()[f[j],:] for j in rg(sz)]))
+        # Initialization of the dierected Laplacian
+        lB= HM(od,(B*HM(B.nrows(),1,'one')).list(),'diag')-B
+        # Initialization of the list of sumbratrices
+        Lmtr=[HM(sz-1,sz-1,[lB[u,v] for u in range(sz) for v in range(sz) if u!=t if v!=t]) for t in range(sz)]
+        # Testing treeness
+        if sum(B[t,t]*Lmtr[t].det() for t in range(sz)) == 1:
+            # Initialization of the tree truple description
+            tq=[(i, f[i]) for i in range(sz)]
+            if prod(x^(sz^abs(tq[i][1]-tq[i][0])) for i in rg(sz)) in Lm:
+                La.append(tq)
+                LtRm.append(prod(A[tq[i][0],tq[i][1]] for i in rg(sz)))
+                Fa=Fa+prod(A[tq[i][0],tq[i][1]] for i in rg(sz))
+    #print 'New monomials = ', LtRm
+    #print 'Number of terms thus far = ', len(Fa.operands())
+    # Initialization of the list of permutations
+    P=Permutations(sz)
+    # Summing over representative of the quotient by the automorphism group of the Fa
+    # which have the same automorphism group made up only of the identity permutation.
+    # We exclude the identity from the sum.
+    F=Fa
+    for p in P[1:]:
+        #print 'p = ', p
+        Ga=sum(ConjugateGraphTerm(tq,p,A) for tq in La).subs([trm==0 for trm in LtRm])
+        if Ga.is_zero() and len(LtRm)==sz^(sz-1):
+            break
+        elif Ga.subs([v==1 for v in [x]+TpA.list()]) == 1:
+            # Updading LtRm with the new monomials
+            LtRm=LtRm+[Ga]
+            #print 'New monomial = ', [Ga.subs(x==1)]
+    	# Updating the sum
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+        else:
+            # Updading LtRm with the new monomials
+            LtRm=Set(LtRm+[mn for mn in Ga.operands()]).list()
+            #print 'New monomials = ', Set([mn for mn in Ga.operands()]).list()
+            # Updating the generator set with the new tree monomial summands.
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+    return [LtRm, Fa]
+
+def tree_conjugationII(sz):
+    """
+    Runs the conjugation algorithm to produce the orbit
+    of trees which admit a graceful labeling. The algorithm
+    returns the list of monomial obtained in the orbit
+    and the polynomial on which the conjugation is being
+    performed
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=3; [LtRm, Fa] = tree_conjugationII(sz)
+        sage: len(LtRm)
+        9
+        sage: sum(LtRm)
+        a00*a10*a20*x^13 + a01*a11*a20*x^13 + a00*a12*a20*x^13 + a02*a11*a21*x^13 + a02*a10*a22*x^13 + a02*a12*a22*x^13 + a00*a10*a21*x^7 + a01*a11*a21*x^7 + a01*a12*a22*x^7
+        sage: Fa
+        a00*a10*a20*x^13 + a01*a11*a20*x^13 + a00*a12*a20*x^13 + a02*a11*a21*x^13 + a02*a10*a22*x^13 + a02*a12*a22*x^13
+
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the order parameter
+    od=2
+    # Initialization of the variables
+    x=var('x')
+    # Initialization of the second order hypermatrices
+    TpA=HM(sz,sz,'a'); X=HM(sz,sz,[x^(sz^abs(j-i)) for j in rg(sz) for i in rg(sz)])
+    A=TpA.elementwise_product(X)
+    #print 'p = ', rg(1,sz+1)
+    # Initialization of the polynomials and the list which will store the trees
+    Fa=0; La=[]; LtRm=[]
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Initialization of the adjacency martrix of the functional graph
+        B=Matrix2HM(sum([Id.matrix()[:,j]*Id.matrix()[f[j],:] for j in rg(sz)]))
+        # Initialization of the dierected Laplacian
+        lB=HM(od,(B*HM(B.nrows(),1,'one')).list(),'diag')-B
+        # Initialization of the list of sumbratrices
+        Lmtr=[HM(sz-1,sz-1,[lB[u,v] for u in rg(sz) for v in rg(sz) if u!=t if v!=t]) for t in rg(sz)]
+        # Testing treeness
+        if sum(B[t,t]*Lmtr[t].det() for t in rg(sz)) == 1:
+            # Initialization of the tree truple description
+            tq=[(i,f[i]) for i in range(sz)]
+            if prod(x^(sz^abs(tq[i][1]-tq[i][0])) for i in rg(sz)) == prod(x^(sz^abs(0-i)) for i in rg(sz)):
+                La.append(tq)
+                LtRm.append(prod(A[tq[i][0],tq[i][1]] for i in rg(sz)))
+                Fa=Fa+prod(A[tq[i][0],tq[i][1]] for i in rg(sz))
+    #print 'New monomials = ', LtRm
+    #print 'Number of terms thus far = ', len(Fa.operands())
+    # Initialization of the list of permutations
+    P=Permutations(sz)
+    # Summing over representative of the quotient by the automorphism group of the Fa
+    # which have the same automorphism group made up only of the identity permutation.
+    # We exclude the identity from the sum.
+    F=Fa
+    for p in P[1:]:
+        #print 'p = ', p
+        Ga=sum(ConjugateGraphTerm(tq,p,A) for tq in La).subs([trm==0 for trm in LtRm])
+        if Ga.is_zero() and len(LtRm)==sz^sz:
+            break
+        elif Ga.subs([v==1 for v in [x]+TpA.list()]) == 1:
+            # Updading LtRm with the new monomials
+            LtRm=LtRm+[Ga]
+            #print 'New monomial = ', [Ga.subs(x==1)]
+    	# Updating the sum
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+        else:
+            # Updading LtRm with the new monomials
+            LtRm=Set(LtRm+[mn for mn in Ga.operands()]).list()
+            #print 'New monomials = ', Set([mn for mn in Ga.operands()]).list()
+            # Updating the generator set with the new tree monomial summands.
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+    return [LtRm, Fa]
+
+def graph_conjugation(sz):
+    """
+    Runs the conjugation algorithm to produce the orbit
+    of trees which admit a graceful labeling. The algorithm
+    returns the list of monomial obtained in the orbit
+    and the polynomial on which the conjugation is being
+    performed
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=3; [LtRm, Fa] = graph_conjugation(sz)
+        sage: len(LtRm)
+        9
+        sage: sum(LtRm)
+        a00*a10*a20*x^13 + a01*a11*a20*x^13 + a00*a12*a20*x^13 + a02*a11*a21*x^13 + a02*a10*a22*x^13 + a02*a12*a22*x^13 + a00*a10*a21*x^7 + a01*a11*a21*x^7 + a01*a12*a22*x^7
+        sage: Fa
+        a00*a10*a20*x^13 + a01*a11*a20*x^13 + a00*a12*a20*x^13 + a02*a11*a21*x^13 + a02*a10*a22*x^13 + a02*a12*a22*x^13
+        sage: sz=4; [LtRm1, Fa] = tree_conjugation(sz)
+        sage: L=Set(LtRm).difference(Set(LtRm1)).list(); L
+        [a00*a12*a23*a31*x^25,
+         a02*a10*a21*a33*x^25,
+         a00*a13*a21*a32*x^25,
+         a03*a11*a20*a32*x^85,
+         a02*a11*a23*a30*x^85,
+         a01*a13*a22*a30*x^85,
+         a03*a10*a22*a31*x^85,
+         a01*a12*a20*a33*x^25]
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the order parameter
+    od=2
+    # Initialization of the variables
+    x=var('x')
+    # Initialization of the second order hypermatrices
+    TpA=HM(sz,sz,'a'); X=HM(sz,sz,[x^(sz^abs(j-i)) for j in rg(sz) for i in rg(sz)])
+    A=TpA.elementwise_product(X)
+    #print 'p = ', rg(1,sz+1)
+    # Initialization of the polynomials and the list which will store the trees
+    Fa=0; La=[]; LtRm=[]
+    # Initialization of the lists
+    l=[sz for i in range(sz)]; Lf=[]
+    # Main loop performing the collecting the functions.
+    for i in range(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in range(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Initialization of the tree truple description
+        tq=[(i,f[i]) for i in range(sz)]
+        if prod(x^(sz^abs(tq[i][1]-tq[i][0])) for i in rg(sz)) == prod(x^(sz^abs(0-i)) for i in rg(sz)):
+            La.append(tq)
+            LtRm.append(prod(A[tq[i][0],tq[i][1]] for i in rg(sz)))
+            Fa=Fa+prod(A[tq[i][0],tq[i][1]] for i in rg(sz))
+    #print 'New monomials = ', LtRm
+    #print 'Number of terms thus far = ', len(Fa.operands())
+    # Initialization of the list of permutations
+    P=Permutations(sz)
+    # Summing over representative of the quotient by the automorphism group of the Fa
+    # which have the same automorphism group made up only of the identity permutation.
+    # We exclude the identity from the sum.
+    F=Fa
+    for p in P[1:]:
+        #print 'p = ', p
+        Ga=sum(ConjugateGraphTerm(tq,p,A) for tq in La).subs([trm==0 for trm in LtRm])
+        if Ga.is_zero() and len(LtRm)==sz^sz:
+            break
+        elif Ga.subs([v==1 for v in [x]+TpA.list()]) == 1:
+            # Updading LtRm with the new monomials
+            LtRm=LtRm+[Ga]
+            #print 'New monomial = ', [Ga.subs(x==1)]
+    	# Updating the sum
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+        else:
+            # Updading LtRm with the new monomials
+            LtRm=Set(LtRm+[mn for mn in Ga.operands()]).list()
+            #print 'New monomials = ', Set([mn for mn in Ga.operands()]).list()
+            # Updating the generator set with the new tree monomial summands.
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+    return [LtRm, Fa]
+
+def creative_stabilizing(sz):
+    """
+    This function implements the main argument of the proof.
+    The function starts by collecting gracefully labeled trees
+    on sz vertices and proceed to generate by conjugation 
+    the orbit of all graceful trees on sz+1 vertices.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=2; [LtRm, Fa] = creative_stabilizing(sz)
+        sage: len(LtRm)
+        9
+        sage: sum(LtRm)
+        a00*a10*a20*x^13 + a01*a11*a20*x^13 + a00*a12*a20*x^13 + a02*a11*a21*x^13 + a02*a10*a22*x^13 + a02*a12*a22*x^13 + a00*a10*a21*x^7 + a01*a11*a21*x^7 + a01*a12*a22*x^7
+        sage: Fa
+        a00*a10*a20*x^13 + a01*a11*a20*x^13 + a00*a12*a20*x^13 + a02*a11*a21*x^13 + a02*a10*a22*x^13 + a02*a12*a22*x^13
+        sage: sz=3; [LtRm, Fa] = creative_stabilizing(sz)
+        sage: TpA=HM(sz+1,sz+1,'a'); X=HM(sz+1,sz+1,[x^((sz+1)^abs(j-i)) for j in rg(sz+1) for i in rg(sz+1)]); A=TpA.elementwise_product(X)
+        sage: sum(LtRm)-sum(prod(A[tq[j][0],tq[j][1]] for j in rg(sz+1)) for tq in RootedTupleTreeFunctionList(sz+1))
+        0
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the order parameter
+    od=2
+    # Initialization of the variables
+    x=var('x')
+    # Initialization of the second order hypermatrices
+    TpA=HM(sz+1,sz+1,'a'); X=HM(sz+1,sz+1,[x^((sz+1)^abs(j-i)) for j in rg(sz+1) for i in rg(sz+1)])
+    A=TpA.elementwise_product(X)
+    #print 'p = ', rg(1,sz+1)
+    # Initialization of the polynomials and the list which will store the trees
+    Fa=0; La=[]; LtRm=[]
+    # Initialization of the lists
+    l=[sz for i in rg(sz)]; Lf=[]
+    # Initialization of the identity matrix
+    Id=HM(od,sz,'kronecker')
+    # Main loop performing the collecting the functions.
+    for i in rg(prod(l)):
+        # Turning the index i into an hypermatrix array location using the decimal encoding trick
+        entry = [Integer(mod(i,l[0]))]
+        sm = Integer(mod(i,l[0]))
+        for k in rg(len(l)-1):
+            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
+            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
+        f=entry
+        # Initialization of the adjacency martrix of the functional graph
+        B=Matrix2HM(sum([Id.matrix()[:,j]*Id.matrix()[f[j],:] for j in rg(sz)]))
+        # Initialization of the dierected Laplacian
+        lB=HM(od,(B*HM(B.nrows(),1,'one')).list(),'diag')-B
+        # Initialization of the list of sumbratrices
+        Lmtr=[HM(sz-1,sz-1,[lB[u,v] for u in rg(sz) for v in rg(sz) if u!=t if v!=t]) for t in rg(sz)]
+        # Testing treeness
+        if sum(B[t,t]*Lmtr[t].det() for t in rg(sz)) == 1:
+            # Initialization of the tree truple description
+            tq=[(j,f[j]) for j in rg(sz)]+[(sz,0)]
+            #if prod(x^((sz+1)^abs(tq[j][1]-tq[j][0])) for j in rg(sz+1)) == prod(x^((sz+1)^abs(0-j)) for j in rg(sz+1)):
+            if prod(x^((sz+1)^abs(tq[j][1]-tq[j][0])) for j in rg(sz+1)) == prod(x^((sz+1)^abs(0-j)) for j in rg(sz+1)):
+                # Initializing the corresponding tree rooted at sz.
+                tp=switch_sink(tq,sz)
+                # Appending the extended gracefully labeled trees
+                La.append(tq) 
+                LtRm.append(prod(A[tq[j][0],tq[j][1]] for j in rg(sz+1)))
+                if ( prod(A[tp[j][0],tp[j][1]] for j in rg(sz+1)) in LtRm ) == False:
+                    La.append(tp)
+                    LtRm.append(prod(A[tp[j][0],tp[j][1]] for j in rg(sz+1)))
+                    Fa=Fa + prod(A[tq[j][0],tq[j][1]] for j in rg(sz+1)) + prod(A[tp[j][0],tp[j][1]] for j in rg(sz+1))
+                else:
+                    Fa=Fa+prod(A[tq[j][0],tq[j][1]] for j in rg(sz+1))
+    #print 'New monomials = ', LtRm
+    #print 'Number of terms thus far = ', len(Fa.operands())
+    # Initialization of the list of permutations
+    P=Permutations(sz+1)
+    # Summing over representative of the quotient by the automorphism group of the Fa
+    # which have the same automorphism group made up only of the identity permutation.
+    # We exclude the identity from the sum.
+    F=Fa
+    for p in P[1:]:
+        #print 'p = ', p
+        Ga=sum(ConjugateGraphTerm(tq,p,A) for tq in La).subs([trm==0 for trm in LtRm])
+        if Ga.is_zero() and len(LtRm)==(sz+1)^sz:
+            break
+        elif Ga.subs([v==1 for v in [x]+TpA.list()]) == 1:
+            # Updading LtRm with the new monomials
+            LtRm=LtRm+[Ga]
+            #print 'New monomial = ', [Ga.subs(x==1)]
+    	# Updating the sum
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+        else:
+            # Updading LtRm with the new monomials
+            LtRm=Set(LtRm+[mn for mn in Ga.operands()]).list()
+            #print 'New monomials = ', Set([mn for mn in Ga.operands()]).list()
+            # Updating the generator set with the new tree monomial summands.
+            F=F+Ga
+            #print 'Number of terms thus far = ', len(F.operands())
+    return [LtRm, Fa]
+
+def undirected_graceful_graph_polynomial(sz):
+    """
+    This function implements the polynomial construction
+    which list all undirected graphs having sz-1 non loop
+    edges which admit a graceful labeling. The coefficient
+    of each term counts ???
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=3; factor(undirected_graceful_graph_polynomial(sz))
+        4*(a01*a02 + a01*a12 + a02*a12)*(a00 + a11 + a22)
+        sage: sz=4; factor(undirected_graceful_graph_polynomial(sz))
+        4*(3*a01*a02*a03 + 3*a01*a02*a12 + a01*a03*a12 + a02*a03*a12 + a01*a02*a13 + 3*a01*a03*a13 + a02*a03*a13 + 3*a01*a12*a13 + a02*a12*a13 + a03*a12*a13 + a01*a02*a23 + a01*a03*a23 + 3*a02*a03*a23 + a01*a12*a23 + 3*a02*a12*a23 + a03*a12*a23 + a01*a13*a23 + a02*a13*a23 + 3*a03*a13*a23 + 3*a12*a13*a23)*(a00 + a11 + a22 + a33)
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the order parameter
+    od=2
+    # Initialization of the matrix
+    A=HM(2*sz-1,2*sz-1,'zero').fill_with(HM(od,sz,'a','sym'))
+    # Going through all the permutations
+    h=0
+    for p in Permutations(sz):
+        # Shifting back the index
+        q=[p[i]-1 for i in rg(sz)]+[i for i in rg(sz,2*sz-1)]
+        h=h+sum(prod(A[q[sz-1-t[0]+t[1]],q[t[1]]] for t in tp) for tp in TupleFunctionList(sz))
+    return h
+
+def undirected_subgraph_polynomial(sz):
+    """
+    This function implements the polynomial construction
+    which list all undirected graphs having sz-1 non loop
+    edges and exactly one loop edge. 
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=3; undirected_subgraph_polynomial(sz)
+        (a01*a02 + a01*a12 + a02*a12)*(a00 + a11 + a22)
+        sage: sz=4; undirected_subgraph_polynomial(sz)
+        (a01*a02*a03 + a01*a02*a12 + a01*a03*a12 + a02*a03*a12 + a01*a02*a13 + a01*a03*a13 + a02*a03*a13 + a01*a12*a13 + a02*a12*a13 + a03*a12*a13 + a01*a02*a23 + a01*a03*a23 + a02*a03*a23 + a01*a12*a23 + a02*a12*a23 + a03*a12*a23 + a01*a13*a23 + a02*a13*a23 + a03*a13*a23 + a12*a13*a23)*(a00 + a11 + a22 + a33)
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the order parameter
+    od=2
+    # Initialization of the matrix
+    A=HM(od,sz,'a','sym')
+    return sum(A[i,i] for i in rg(sz))*sum(prod(st) for st in Set([A[i,j] for j in rg(sz) for i in rg(sz) if i<j]).subsets(sz-1))
+
+def undirected_ungraceful_graph_polynomial(sz):
+    """
+    This function implements the polynomial construction
+    which list all undirected graphs having sz-1 non loop
+    edges which do not admit a graceful labeling.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=4; undirected_ungraceful_graph_polynomial(sz)
+        0
+        sage: sz=5; factor(undirected_ungraceful_graph_polynomial(sz))
+        a00*a04*a12*a13*a23 + a04*a11*a12*a13*a23 + a00*a02*a03*a14*a23 + a00*a01*a04*a14*a23 + a02*a03*a11*a14*a23 + a01*a04*a11*a14*a23 + a04*a12*a13*a22*a23 + a02*a03*a14*a22*a23 + a01*a04*a14*a22*a23 + a00*a01*a03*a13*a24 + a00*a02*a04*a13*a24 + a01*a03*a11*a13*a24 + a02*a04*a11*a13*a24 + a00*a03*a12*a14*a24 + a03*a11*a12*a14*a24 + a01*a03*a13*a22*a24 + a02*a04*a13*a22*a24 + a03*a12*a14*a22*a24 + a04*a12*a13*a23*a33 + a02*a03*a14*a23*a33 + a01*a04*a14*a23*a33 + a01*a03*a13*a24*a33 + a02*a04*a13*a24*a33 + a03*a12*a14*a24*a33 + a00*a01*a02*a12*a34 + a00*a03*a04*a12*a34 + a01*a02*a11*a12*a34 + a03*a04*a11*a12*a34 + a00*a02*a13*a14*a34 + a02*a11*a13*a14*a34 + a01*a02*a12*a22*a34 + a03*a04*a12*a22*a34 + a02*a13*a14*a22*a34 + a00*a01*a23*a24*a34 + a01*a11*a23*a24*a34 + a01*a22*a23*a24*a34 + a01*a02*a12*a33*a34 + a03*a04*a12*a33*a34 + a02*a13*a14*a33*a34 + a01*a23*a24*a33*a34 + a04*a12*a13*a23*a44 + a02*a03*a14*a23*a44 + a01*a04*a14*a23*a44 + a01*a03*a13*a24*a44 + a02*a04*a13*a24*a44 + a03*a12*a14*a24*a44 + a01*a02*a12*a34*a44 + a03*a04*a12*a34*a44 + a02*a13*a14*a34*a44 + a01*a23*a24*a34*a44
+       
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    A=HM(sz,sz,'a'); La=[A[i,j] for j in rg(sz) for i in rg(sz) if i<=j]
+    # Initialization of the polynomial construction of undirected graceful polynomial
+    f=undirected_graceful_graph_polynomial(sz)
+    # Scalling the non vanishing coefficient to 1
+    F=sum(trm/trm.subs([v==1 for v in La]) for trm in f.operands())
+    return expand(undirected_subgraph_polynomial(sz))-F
 
