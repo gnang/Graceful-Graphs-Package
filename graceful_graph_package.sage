@@ -573,6 +573,37 @@ def SignedPermutationsAlphaII(sz):
     X=var_list('x',sz); Y=var_list('y',sz)
     return [[sigma, prod(prod(Y[j] for j in rg(min(i, i+sigma[i]), max(i, i+sigma[i]))) for i in rg(sz))] for sigma in SignedPermutations(sz)]
 
+def GraphSignedPermutationOrbitsSPIII(T):
+    """
+    Obtain the orbits of signed function defined by
+    the isomorphism classes of associated trees. The tree
+    isomorphism function is doing the heavy lifting here.
+    The functions takes as input a tuple edge list.
+
+
+    EXAMPLES:
+
+    ::
+
+
+        sage: GraphSignedPermutationOrbitsSPIII([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)])
+        [[0, 1, 2, -3, -4], [0, 2, -1, -3, -4]]
+
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initialization of the list of permutations
+    L=SignedPermutations(len(T))
+    # Initialization of the list storing the equivalence class of trees.
+    cL=[]
+    # Loop perfomring the isomorphism binning.
+    for s in L:
+        nwT=True
+        if SP2DiGraph(s).is_isomorphic(T2DiGraph(T)) and not s in cL:
+            cL.append(s)
+    return cL
+
 def GraphSignedPermutationOrbitsT(T):
     """
     Obtain the orbits of signed function defined by
@@ -2639,38 +2670,6 @@ def GeneratorGracefulTreeDiGraphList(n):
         Rslt.append([TmpL,l[1]])
     return Rslt
 
-def BasicLagrangeInterpolation(L, x):
-    """
-    Implements the basic lagrange interpolation.
-    The functions take as input a list of tuples
-    and outputs a polynomial in the variable x
-
-
-    EXAMPLES:
-    ::
-
-
-        sage: x=var('x')
-        sage: BasicLagrangeInterpolation([(0,0), (1,1), (2,2), (3,3)], x)
-        1/2*(x - 1)*(x - 2)*x - (x - 1)*(x - 3)*x + 1/2*(x - 2)*(x - 3)*x
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # L is a list of tuples
-    # Initialized the lenght of the list
-    n = len(L)
-    # Initialization of the function
-    f = 0
-    # Code for building the parts 
-    for idx in range(len(L)):
-        fk = 1
-        for j in [i for i in range(len(L)) if i != idx]:
-            fk = fk*((x-L[j][0])/(L[idx][0]-L[j][0]))
-        f = f + L[idx][1]*fk
-    return f
-
 def GeneratorGracefulPolynomialList(n, x):
     """
     Goes through generator graceful tuple list and produce a list of
@@ -2953,26 +2952,6 @@ def T2Graph(T):
     Id=identity_matrix(len(T))
     return Graph(sum(Id[:,t[0]]*Id[t[1],:] for t in T[1:])+sum(Id[:,t[0]]*Id[t[1],:] for t in T[1:]).transpose())
 
-def T2GraphII(T):
-    """
-    The method returns an undirected graph object associated with 
-    with the tuple list description of the directed graph
-
-    EXAMPLES:
-
-    ::
-
-        sage: T2GraphII([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)]).degree_sequence()
-        [2, 2, 2, 1, 1]
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the identity matrix
-    Id=identity_matrix(len(T))
-    return DiGraph(sum(Id[:,t[0]]*Id[t[1],:] for t in T))
-
 def SP2Graph(sigma):
     """
     The method returns an undirected graph object associated with 
@@ -3016,112 +2995,6 @@ def SP2DiGraph(sigma):
     # Initialization of the identity matrix
     Id=identity_matrix(len(T))
     return DiGraph(sum(Id[:,t[0]]*Id[t[1],:] for t in T))
-
-def TupleFunctionList(sz):
-    """
-    Returns list of edge tuple desctiption for all 
-    functional directed graphs.
-
-
-    EXAMPLES:
-    ::
-        sage: TupleFunctionList(3)
-        [[(0, 0), (1, 0), (2, 0)],
-         [(0, 1), (1, 0), (2, 0)],
-         [(0, 2), (1, 0), (2, 0)],
-         [(0, 0), (1, 1), (2, 0)],
-         [(0, 1), (1, 1), (2, 0)],
-         [(0, 2), (1, 1), (2, 0)],
-         [(0, 0), (1, 2), (2, 0)],
-         [(0, 1), (1, 2), (2, 0)],
-         [(0, 2), (1, 2), (2, 0)],
-         [(0, 0), (1, 0), (2, 1)],
-         [(0, 1), (1, 0), (2, 1)],
-         [(0, 2), (1, 0), (2, 1)],
-         [(0, 0), (1, 1), (2, 1)],
-         [(0, 1), (1, 1), (2, 1)],
-         [(0, 2), (1, 1), (2, 1)],
-         [(0, 0), (1, 2), (2, 1)],
-         [(0, 1), (1, 2), (2, 1)],
-         [(0, 2), (1, 2), (2, 1)],
-         [(0, 0), (1, 0), (2, 2)],
-         [(0, 1), (1, 0), (2, 2)],
-         [(0, 2), (1, 0), (2, 2)],
-         [(0, 0), (1, 1), (2, 2)],
-         [(0, 1), (1, 1), (2, 2)],
-         [(0, 2), (1, 1), (2, 2)],
-         [(0, 0), (1, 2), (2, 2)],
-         [(0, 1), (1, 2), (2, 2)],
-         [(0, 2), (1, 2), (2, 2)]]
-
-
-
-    AUTHORS:
-
-    - Edinah K. Gnang
-    """
-    # Initialization of the lists
-    l=[sz for i in range(sz)]; Lf=[]
-    # Main loop performing the collecting the functions.
-    for i in range(prod(l)):
-        # Turning the index i into an hypermatrix array location using the decimal encoding trick
-        entry = [Integer(mod(i,l[0]))]
-        sm = Integer(mod(i,l[0]))
-        for k in range(len(l)-1):
-            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
-            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
-        f=entry
-        # Appending the function to the list
-        Lf.append([(i,f[i]) for i in rg(sz)])
-    return Lf
-
-def TreeFunctionList(n):
-    """
-    Goes through all the functions and determines which ones
-    are associated with trees. One of think of thes trees as
-    rooted at 0.
-
-    EXAMPLES:
-    ::
-        sage: TreeFunctionList(4)
-        [[0, 0, 0],
-        [2, 0, 0],
-        [3, 0, 0],
-        [0, 1, 0],
-        [3, 1, 0],
-        [0, 3, 0],
-        [2, 3, 0],
-        [3, 3, 0],
-        [0, 0, 1],
-        [2, 0, 1],
-        [0, 1, 1],
-        [0, 3, 1],
-        [0, 0, 2],
-        [2, 0, 2],
-        [3, 0, 2],
-        [0, 1, 2]]
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the lists
-    l=[n for i in range(n-1)]; Lf=[]
-    # Initialization of the identity matrix
-    Id=identity_matrix(n)
-    # Main loop performing the collecting the functions.
-    for i in range(prod(l)):
-        # Turning the index i into an hypermatrix array location using the decimal encoding trick
-        entry = [Integer(mod(i,l[0]))]
-        sm = Integer(mod(i,l[0]))
-        for k in range(len(l)-1):
-            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
-            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
-        f=entry
-        # Appending the function to the list
-        if is_Tree(sum([Id[:,j]*Id[f[j-1],:]+Id[:,f[j-1]]*Id[j,:] for j in range(1,n)])):
-            Lf.append(f)
-    return Lf
 
 def TupleTreeFunctionList(sz):
     """
@@ -3227,60 +3100,6 @@ def RootedTreeFunctionList(sz):
         if sum(A[t,t]*Lmtr[t].det() for t in range(sz)) == 1:
             # Appending the function to the list
             Lf.append(f)
-    return Lf
-
-def RootedTupleTreeFunctionList(sz):
-    """
-    Goes through all the functions and determines which ones
-    are associated with trees.
-
-    EXAMPLES:
-    ::
-        sage: RootedTupleTreeFunctionList(3)
-        [[(0, 0), (1, 0), (2, 0)],
-         [(0, 1), (1, 1), (2, 0)],
-         [(0, 2), (1, 0), (2, 2)],
-         [(0, 0), (1, 2), (2, 0)],
-         [(0, 2), (1, 1), (2, 1)],
-         [(0, 2), (1, 2), (2, 2)],
-         [(0, 0), (1, 0), (2, 1)],
-         [(0, 1), (1, 1), (2, 1)],
-         [(0, 1), (1, 2), (2, 2)]]
-        sage: sz=3; X=var_list('x',sz+1); Y=var_list('y',sz+1); Z=var_list('z',sz+1); Ta=HM(sz+1,sz+1,'a'); A=HM(sz+1,sz+1,'zero'); DgA=[Ta[i,i] for i in rg(sz+1)]
-        sage: for i in rg(sz+1):
-        ....:     for j in rg(sz+1):
-        ....:         A[i,j]=Ta[i,j]*X[abs(j-i)]*prod(Y[u] for u in rg(min(i,j), max(i,j)))*prod(Z[u] for u in rg(1+min(i,j), 1+max(i,j)))
-        ....:
-        sage: sum(prod(A[t[0],t[1]] for t in tp) for tp in RootedTupleTreeFunctionList(sz))
-        a00*a10*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a01*a11*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a02*a10*a22*x0*x1*x2*y0^2*y1*z1^2*z2 + a00*a12*a20*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a11*a21*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a12*a22*x0*x1*x2*y0*y1^2*z1*z2^2 + a00*a10*a21*x0*x1^2*y0*y1*z1*z2 + a01*a11*a21*x0*x1^2*y0*y1*z1*z2 + a01*a12*a22*x0*x1^2*y0*y1*z1*z2
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the lists
-    l=[sz for i in range(sz)]; Lf=[]
-    # Initialization of the identity matrix
-    Id=identity_matrix(sz)
-    # Main loop performing the collecting the functions.
-    for i in range(prod(l)):
-        # Turning the index i into an hypermatrix array location using the decimal encoding trick
-        entry = [Integer(mod(i,l[0]))]
-        sm = Integer(mod(i,l[0]))
-        for k in range(len(l)-1):
-            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
-            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
-        f=entry
-        # Initialization of the adjacency martrix of the functional graph
-        A = sum([Id[:,j]*Id[f[j],:] for j in range(sz)])
-        # Initialization of the dierected Laplacian
-        lA= diagonal_matrix((A*ones_matrix(A.nrows(),1)).list())-A
-        # Initialization of the list of sumbratrices
-        Lmtr=[Matrix(ZZ,sz-1,sz-1,[lA[u,v] for u in range(sz) for v in range(sz) if u!=t if v!=t]) for t in range(sz)]
-        # Testing treeness
-        if sum(A[t,t]*Lmtr[t].det() for t in range(sz)) == 1:
-            # Appending the function to the list
-            Lf.append([(i, f[i]) for i in range(sz)])
     return Lf
 
 def RootedTupleGracefulTreeFunctionList(sz):
@@ -3434,79 +3253,6 @@ def RootedTupleGracefulFunctionList(sz):
             # Appending the function to the list
             Lf.append([(i,f[i]) for i in range(sz)])
     return Lf
-
-def RootedTupleInducedFunctionList(sz, induced_edge_label_sequence):
-    """
-    Goes through all the functions and determines which ones
-    are associated with the input induced edge labeled  sequence 
-    functional directed graphs.
-
-    EXAMPLES:
-    ::
-        sage: RootedTupleGracefulFunctionList(3)
-        [[(0, 0), (1, 0), (2, 0)],
-         [(0, 1), (1, 1), (2, 0)],
-         [(0, 0), (1, 2), (2, 0)],
-         [(0, 0), (1, 0), (2, 1)],
-         [(0, 1), (1, 1), (2, 1)],
-         [(0, 2), (1, 1), (2, 1)],
-         [(0, 2), (1, 0), (2, 2)],
-         [(0, 1), (1, 2), (2, 2)],
-         [(0, 2), (1, 2), (2, 2)]]
-        sage: sz=3; X=var_list('x',sz+1); Y=var_list('y',sz+1); Z=var_list('z',sz+1); Ta=HM(sz+1,sz+1,'a'); A=HM(sz+1,sz+1,'zero'); DgA=[Ta[i,i] for i in rg(sz+1)]
-        sage: for i in rg(sz+1):
-        ....:     for j in rg(sz+1):
-        ....:         A[i,j]=Ta[i,j]*X[abs(j-i)]*prod(Y[u] for u in rg(min(i,j), max(i,j)))*prod(Z[u] for u in rg(1+min(i,j), 1+max(i,j)))
-        ....:
-        sage: sum(prod(A[t[0],t[1]] for t in tp) for tp in RootedTupleGracefulFunctionList(sz))
-        a00*a10*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a01*a11*a20*x0*x1*x2*y0^2*y1*z1^2*z2 + a02*a10*a22*x0*x1*x2*y0^2*y1*z1^2*z2 + a00*a12*a20*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a11*a21*x0*x1*x2*y0*y1^2*z1*z2^2 + a02*a12*a22*x0*x1*x2*y0*y1^2*z1*z2^2 + a00*a10*a21*x0*x1^2*y0*y1*z1*z2 + a01*a11*a21*x0*x1^2*y0*y1*z1*z2 + a01*a12*a22*x0*x1^2*y0*y1*z1*z2
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the lists
-    l=[sz for i in range(sz)]; Lf=[]
-    # Initialization of the identity matrix
-    Id=identity_matrix(sz)
-    # Main loop performing the collecting the functions.
-    for i in range(prod(l)):
-        # Turning the index i into an hypermatrix array location using the decimal encoding trick
-        entry = [Integer(mod(i,l[0]))]
-        sm = Integer(mod(i,l[0]))
-        for k in range(len(l)-1):
-            entry.append(Integer(mod(Integer((i-sm)/prod(l[0:k+1])),l[k+1])))
-            sm = sm+prod(l[0:k+1])*entry[len(entry)-1]
-        f=entry
-        # Testing the indiced edge label sequence 
-        EdgLblSeq=[abs(f[i]-i) for i in range(sz)]; EdgLblSeq.sort()
-        if EdgLblSeq == induced_edge_label_sequence:
-            # Appending the function to the list
-            Lf.append([(i,f[i]) for i in range(sz)])
-    return Lf
-
-def PermutationFunctionList(sz):
-    """
-    Returns a tuple list associated with permutations.
-
-
-    EXAMPLES:
-    ::
-        sage: PermutationFunctionList(3)
-        [[(0, 0), (1, 1), (2, 2)],
-         [(0, 0), (1, 2), (2, 1)],
-         [(0, 1), (1, 0), (2, 2)],
-         [(0, 1), (1, 2), (2, 0)],
-         [(0, 2), (1, 0), (2, 1)],
-         [(0, 2), (1, 1), (2, 0)]]
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the list of permutations of elements from 1 to (n-1).
-    P=Permutations(sz)
-    return [[(i,p[i]-1) for i in rg(sz)] for p in P]
 
 def NonIsomorphicRootedTreeFunctionList(sz):
     """
@@ -5685,6 +5431,41 @@ def mPerII(A,tp):
         f=f+prod([A[p[tp[k][0]],p[tp[k][1]]] for k in range(A.nrows())])
     return f
 
+def mPerIII(A,tp):
+    """
+    Computes symbolically the modified permanent
+    by summing over all permutations and where the
+    vertex with the largest label mapping to the image
+    of its orginal image
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=4; L=[[(0,0)]+[(i+1,l[i]) for i in rg(len(l))] for l in TreeFunctionList(sz)]; tp=L[1]
+        sage: A=HM(sz,sz,'a').elementwise_product(HM(sz,sz,[x^(sz^abs(j-i)) for j in rg(sz) for i in rg(sz)]))
+        sage: mPerII(A,tp).coefficient(x^((sz^sz-1)/(sz-1)))
+        a00*a12*a20*a30 + a02*a12*a22*a30 + a03*a11*a21*a31 + a03*a13*a21*a33
+        sage: sz=4; mPerIII(HM(sz,sz,'a'), [(i,0) for i in rg(sz)])
+        6*a00*a10*a20*a30 + 6*a01*a11*a21*a31 + 6*a02*a12*a22*a32 + 6*a03*a13*a23*a33
+       
+ 
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    sz=A.n(0)
+    # Initializing the permutations
+    P = Permutations(sz)
+    # Initialization of the function
+    f=0
+    for q in P:
+        # fixing the permutation index
+        p=[q[i]-1 for i in rg(sz)]
+        f=f+prod(A[p[tp[k][0]],p[tp[k][1]]] for k in rg(A.nrows()-1))*A[p[tp[sz-1][0]],p[tp[tp[sz-1][1]][1]]]
+    return f
+
 def per_generating_polynomial(sz):
     """
     Goes through all the permutation of n > 1 elements and outputs
@@ -6182,44 +5963,6 @@ def mper_gaussian_elimination_ReductionHM(Cf, VrbL, Rlts, Tp):
         i=i+1; j=j+1
     return A
 
-def tpl_pre_image_set(tp, i):
-    """
-    returns the list of vertex pre-images of the input vertex.
-    The input graphs is assumes to have no isolated vertices.
-
-    EXAMPLES:
-
-    ::
-
-        sage: tpl_pre_image_set([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)], 0)
-        [3, 4]
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    return Set([t[0] for t in tp if t[1]==i]).list()
-
-def tpl_image_set(tp):
-    """
-    returns the list of vertex pre-images of the input vertex.
-    The input graphs is assumes to have no isolated vertices.
-
-    EXAMPLES:
-
-    ::
-
-        sage: tpl_image_set([(0, 0), (1, 2), (2, 4), (3, 0), (4, 0)])
-        [0, 2, 4]
-        
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initializing and sorting the list
-    L=Set([t[1] for t in tp]).list(); L.sort()
-    return L
-
 def tpl_vertex_bipartition(tp):
     """
     returns the vertex bipartition associated with a tree
@@ -6287,113 +6030,6 @@ def FindTreeTupleComponents(T):
         else:
             raise ValueError, "Expected a tree"
     return C
-
-def FindTreeTupleComponentsII(T):
-    """
-    Returns a tuple list each of which corresponds to a pair
-    made up of a vertex and the associated sink vertex.
-    This implementation assume the input is a tree.
-
-
-    EXAMPLES:
-
-    ::
-
-
-        sage: FindTreeTupleComponentsII([(0, 0), (1, 2), (2, 4), (3, 7), (4, 4), (5, 0), (6, 0), (7, 0)])
-        [(0, 0), (1, 4), (2, 4), (3, 0), (4, 4), (5, 0), (6, 0), (7, 0)]
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Classifying the vertices
-    C=[(find_sink(T),find_sink(T))]
-    Rg=rg(len(T)); Rg.remove(find_sink(T))
-    for j in Rg:
-        i=j; cnt=0
-        while T[i][1] != T[i][0] and cnt <= len(T)+1:
-            i=T[i][1]; cnt=cnt+1
-        if T[i][1] == T[i][0]:
-            C.append((j,T[i][0]))
-        else:
-            raise ValueError, "Expected a tree"
-    C.sort()
-    return C
-
-def find_sink(tp):
-    """
-    Finds the sink (also called root of a functional tree).
-
-
-    EXAMPLES:
-
-    ::
-
-
-        sage: find_sink([(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)])
-        
-
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    T=[(tp[i][0],tp[i][1]) for i in tpl_image_set(tp)]
-    for i in rg(len(tp)):
-        T=[(tp[i][0],tp[i][1]) for i in tpl_image_set(T)]
-    return T[0][0]
-
-def switch_sink(Tn, alpha):
-    """
-    Switches the sink from a to alpha in the tree
-    
-
-
-    EXAMPLES:
-
-    ::
-
-
-        sage: switch_sink([(0, 0), (1, 3), (2, 1), (3, 0), (4, 0)], 1)
-        [(0, 3), (1, 1), (2, 1), (3, 1), (4, 0)]
-
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    a = find_sink(Tn)
-    if a==alpha:
-        return Tn
-    else:
-        # The new sink will be alpha instead of a
-        Tp=[]
-        # Obtaining the spine made up of the path from alpha to a
-        Snk=[]; i=alpha; Tp.append((alpha, alpha))
-        while Tn[i][0] != a and Tn[i][1] != a:
-            Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][0])
-            i=Tn[i][1]
-            #print 'Tp=',Tp
-        Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][0])
-        Snk.append(Tn[i][1])
-        #print 'Snk=',Snk
-        # Partioning the vertices of Tn by components
-        C=FindTreeTupleComponentsII(Tn)
-        #print 'C=',C
-        # Initialization of the list of vertices in the partition a
-        Sa=Set([C[i][0] for i in range(len(Tn)) if C[i][1]==a])
-        #print 'Sa=',Sa
-        # Correcting the orrientation of the remaining edges
-        while Set(Snk) != Sa:
-            for i in Sa:
-                if (Tn[i][0] in Snk) and (Tn[i][1] not in Snk):
-                    Tp.append((Tn[i][1], Tn[i][0])); Snk.append(Tn[i][1])
-                elif (Tn[i][0] not in Snk) and (Tn[i][1] in Snk):
-                    Tp.append((Tn[i][0], Tn[i][1])); Snk.append(Tn[i][0])
-        # Sorting the list
-        Tp.sort()
-        return Tp
 
 def graph_function_orbit(T):
     """
@@ -6600,51 +6236,6 @@ def SgnTp(tp):
     - Edinah K. Gnang
     """
     return (-1)^CountInversions(tp)
-
-def mPer(A,tq):
-    """
-    Computes symbolically the partial modified permanent by summing only over
-    representatives of the coeset.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: sz=4; L=[[(0,0)]+[(i+1,l[i]) for i in rg(len(l))] for l in TreeFunctionList(sz)]; tp=L[1]
-        sage: A=HM(sz,sz,'a').elementwise_product(HM(sz,sz,[x^(sz^abs(j-i)) for j in rg(sz) for i in rg(sz)]))
-        sage: mPer(A,tp).coefficient(x^((sz^sz-1)/(sz-1)))
-        a00*a12*a20*a30 + a03*a11*a21*a31
-        sage: sz=4; mPer(HM(sz,sz,'a'), [(i,0) for i in rg(sz)])
-        a00*a10*a20*a30 + a01*a11*a21*a31 + a02*a12*a22*a32 + a03*a13*a23*a33
-       
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    sz=A.n(0)
-    tp=[(1+tq[i][0], 1+tq[i][1]) for i in rg(len(tq))]
-    # Initializing the permutations
-    P = Permutations(sz); S=SymmetricGroup(sz)
-    # Initializing the graph
-    grph=T2DiGraphII(tp, sz+1)
-    # Initializing the automorphism group
-    AutGrp=grph.automorphism_group()
-    # Initializing representatives of Left coset as strings
-    Lcstr=[CstL[0].cycle_string() for CstL in S.cosets(AutGrp)]
-    # Loop enumerating the number of graceful labelings
-    fctr=0
-    # Initialization of the function
-    f=0
-    for p in P:
-        if p.cycle_string() in Lcstr:
-            # Initializing the inverse
-            pinv=p.inverse()
-            # fixing the permutations index
-            q =[p[i]-1 for i in rg(sz)]
-            qi=[pinv[i]-1 for i in rg(sz)]
-            f=f+prod([A[j, q[tp[qi[j]][1]-1]] for j in range(sz)])
-    return f
 
 def GrLmPer(A,tq):
     """
@@ -7050,32 +6641,6 @@ def comp(tp, tq):
     # Initialization of the size parameter
     return [(i,tp[tq[i][1]][1]) for i in rg(len(tp))]
 
-def gcomp(tp, tq):
-    """
-    Performs the absolute difference composition of functions
-    the inputs to the function are two tuple lists of the same
-    size. The current version does not check that the list are
-    in fact of the same size.
-
-
-    EXAMPLES:
-
-    ::
-
-        sage: tp=[(0,1), (1,2), (2,3), (3,0)]; tq=[(0,0), (1,0), (2,0), (3,0)]
-        sage: gcomp(tp, tq)
-        [(0, 1), (1, 2), (2, 3), (3, 0)]
-       
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the size parameter
-    sz=len(tq); tr=[(i,i) for i in rg(sz)]
-    # Updating the composition
-    for i in rg(sz):
-        tr[abs(tq[i][1]-tq[i][0])] = (abs(tq[i][0]-tq[i][1]), tp[abs(tq[i][0]-tq[i][1])][1])
-    return tr
 
 def tree_conjugation(sz):
     """
@@ -7538,96 +7103,6 @@ def undirected_ungraceful_graph_polynomial(sz):
     F=sum(trm/trm.subs([v==1 for v in La]) for trm in f.operands())
     return expand(undirected_subgraph_polynomial(sz))-F
 
-def composition(f, x, k, sz):
-    """
-    This function performs the composition of the function f in the 
-    variable x with itself k times. The implementation assumes that
-    f is the functions defined by a functional directed graph on sz
-    vertices in order to ensure that the function has degree at most
-    sz-1 
-
-
-    EXAMPLES:
-    ::
-
-
-        sage: x=var('x'); f=1/2*(x - 1)*(x - 2)*x - (x - 1)*(x - 3)*x + 1/2*(x - 2)*(x - 3)*x
-        sage: composition(f, x, 1, 4)
-        1/2*(x - 1)*(x - 2)*x - (x - 1)*(x - 3)*x + 1/2*(x - 2)*(x - 3)*x
-        sage: sz=4; tq=[(0, 1), (1, 2), (2, 3), (3, 3)]
-        sage: f=BasicLagrangeInterpolation(tq,z)
-        sage: tq == [(i, f.subs(z==i)) for i in rg(sz)]
-        True
-        sage: L=[composition(f, z, i, sz) for i in rg(sz)]; L
-        [z,
-         -1/6*(z - 1)*(z - 2)*(z - 3) + 1/2*(z - 1)*(z - 2)*z - 3/2*(z - 1)*(z - 3)*z + (z - 2)*(z - 3)*z,
-         -1/3*(z - 1)*(z - 2)*(z - 3) + 1/2*(z - 1)*(z - 2)*z - 3/2*(z - 1)*(z - 3)*z + 3/2*(z - 2)*(z - 3)*z,
-         -1/2*(z - 1)*(z - 2)*(z - 3) + 1/2*(z - 1)*(z - 2)*z - 3/2*(z - 1)*(z - 3)*z + 3/2*(z - 2)*(z - 3)*z]
-        sage: [[(i, g.subs(z==i)) for i in rg(sz)] for g in L]
-        [[(0, 0), (1, 1), (2, 2), (3, 3)],
-         [(0, 1), (1, 2), (2, 3), (3, 3)],
-         [(0, 2), (1, 3), (2, 3), (3, 3)],
-         [(0, 3), (1, 3), (2, 3), (3, 3)]]
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    if k==0:
-        return x
-    elif k==1:
-        return f
-    elif k > 1:
-        # Initialization of the function
-        g=f
-        for t in rg(k-1):
-            # Initialization of the function
-            TmpF=0
-            # Code for building the parts 
-            for idx in range(sz):
-                fk=1
-                for j in [i for i in rg(sz) if i != idx]:
-                    fk=fk*(x-j)/(idx-j)
-                TmpF=TmpF + g.subs(x==f).subs(x==idx)*fk
-            g=TmpF
-        return g
-
-def compose_with(f, g, sz, vrbl):
-    """
-    This function performs the composition of the function f in the 
-    variable x with itself k times. The implementation assumes that
-    f is the functions defined by a functional directed graph on sz
-    vertices in order to ensure that the function has degree at most
-    sz-1 
-
-
-    EXAMPLES:
-    ::
-
-
-        sage: f0=BasicLagrangeInterpolation([(0,1), (1,2), (2,0)],x); f1=BasicLagrangeInterpolation([(0,2), (1,0), (2,1)],x); f2=x
-        sage: f3=0; f4=BasicLagrangeInterpolation([(0,0), (1,2), (2,1)],x)
-        sage: expand(compose_with(f0, f1, 3, x))
-        x
-        sage: compose_with(f4, f4, 3, x) - composition(f4, x, 2, 3)
-        0
-
-
-
-    AUTHORS:
-    - Edinah K. Gnang
-    """
-    # Initialization of the function
-    TmpF=0
-    # Code for building the parts 
-    for idx in range(sz):
-        fk=1
-        for j in [i for i in rg(sz) if i != idx]:
-            fk=fk*(vrbl-j)/(idx-j)
-        TmpF=TmpF + f.subs(vrbl==g).subs(vrbl==idx)*fk
-    g=TmpF
-    return g
-
 def composition_generator_trees(sz):
     """
     This function goes through all rooted trees and determines which ones
@@ -7998,7 +7473,7 @@ def ListingGracefulGraphs(n):
 
 
         sage: ListingGracefulGraphs(3)
-        -x01*x02 + x02*x12
+        x01*x02 + x02*x12
 
 
     AUTHORS:
