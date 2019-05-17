@@ -4291,6 +4291,307 @@ def generate_script_fast_partial_graceful_listII(sz):
     # Closing the file
     f.close()
 
+def generate_script_graceful_trees(sz):
+    """
+    The produces an implementation an optimal sage script for
+    displaying and listing graceful functional directed graphs
+    which never cross the axis y=x.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: from subprocess import call
+        sage: call("touch fast_listing_of_graceful_trees_on_10_vertices.sage", shell=True)
+        0
+        sage: call("rm fast_listing_of_graceful_trees_on_10_vertices.sage", shell=True)
+        0
+        sage: generate_script_graceful_trees(4)
+        sage: call("ls fast_listing_of_graceful_trees_on_4_vertices.sage", shell=True)
+        fast_listing_of_graceful_trees_on_4_vertices.sage
+        0
+        sage: load('fast_listing_of_graceful_trees_on_4_vertices.sage') 
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        sage: f
+        12*a00*a10*a20*a30 + 4*a00*a10*a21*a30 + 4*a00*a10*a20*a31 + 12*a00*a10*a21*a31 + 4*a00*a10*a20*a32 + 4*a00*a10*a21*a32
+
+ 
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Creating the string corresponding to the file name
+    filename = 'fast_listing_of_graceful_trees_on_'+str(sz)+'_vertices.sage'
+    # Opening the file
+    f = open(filename,'w')
+    f.write('# Loading the Hypermatrix Package\n')
+    f.write("load('./Hypermatrix_Algebra_tst.sage')\n\n")
+    f.write('# Loading the Graceful Graph Package\n')
+    f.write("load('./graceful_graph_package.sage')\n\n")
+    f.write('# Initialization of the size parameter\n')
+    f.write('sz='+str(sz)+'\n\n')
+    f.write('# Initialization of the symbolic variables\n')
+    f.write("A=HM(sz,sz,'a'); Y=var_list('y',sz); K=var_list('k',sz)\n\n")
+    f.write('# Initialization of the Permutations\n')
+    f.write('P=Permutations(sz)\n\n')
+    f.write('# Computing the sum over gracefully labeled functional directed graphs\n')
+    f.write('f=0 \n\n')
+    f.write('# Main loop\n')
+    f.write('for t in NonIncreasingFunctionList(sz)[0]:\n')
+    # variable storing the indentation spaces
+    sp = '    '
+    for i in range(sz):
+        tmpString='for K['+str(i)+'] in rg(2):\n'
+        f.write(sp+tmpString)
+        sp=sp+'    '
+    f.write(sp+'if prod(Y[j-t[j][1]]^K[j]*Y[sz-1-t[j][1]]^(1-K[j]) for j in rg(sz))==prod(Y):\n')
+    sp=sp+'    '
+    f.write(sp+'for p in P:\n')
+    sp=sp+'    '
+    f.write(sp+'if prod(p[k-t[k][1]]*K[k]+p[sz-1-t[k][1]]*(1-K[k]) >= p[k-t[k][1]]*(1-K[k])+p[sz-1-t[k][1]]*K[k] for k in rg(sz)):\n')
+    sp=sp+'    '
+    f.write(sp+'f=f+prod(A[p[sz-1-t[i][1]]-1,p[i-t[i][1]]-1]^(1-K[i])*A[p[i-t[i][1]]-1,p[sz-1-t[i][1]]-1]^K[i] for i in rg(sz))/2\n\n')
+    f.write('# Initialization of the list of graphs\n')
+    f.write('LtG = [Monomial2TII(mnm, A.list(), sz) for mnm in f.operands()]\n\n')
+    f.write('# Plotting the trees \n')
+    f.write('for g in LtG:\n')
+    f.write('    T2DiGraphII(g,sz).plot().show()\n')
+    # Closing the file
+    f.close()
+
+def generate_script_graceful_treesII(sz):
+    """
+    The produces an implementation an optimal sage script for
+    displaying and listing graceful functional directed graphs
+    which never cross the axis y=x.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: from subprocess import call
+        sage: call("touch fast_listing_of_graceful_trees_on_10_vertices.sage", shell=True)
+        0
+        sage: call("rm fast_listing_of_graceful_trees_on_10_vertices.sage", shell=True)
+        0
+        sage: generate_script_graceful_trees(4)
+        sage: call("ls fast_listing_of_graceful_trees_on_4_vertices.sage", shell=True)
+        fast_listing_of_graceful_trees_on_4_vertices.sage
+        0
+        sage: load('fast_listing_of_graceful_trees_on_4_vertices.sage') 
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        sage: f
+        12*a00*a10*a20*a30 + 4*a00*a10*a21*a30 + 4*a00*a10*a20*a31 + 12*a00*a10*a21*a31 + 4*a00*a10*a20*a32 + 4*a00*a10*a21*a32
+
+ 
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Creating the string corresponding to the file name
+    filename = 'fast_listing_of_graceful_trees_on_'+str(sz)+'_vertices.sage'
+    # Opening the file
+    f = open(filename,'w')
+    f.write('# Loading the Hypermatrix Package\n')
+    f.write("load('./Hypermatrix_Algebra_tst.sage')\n\n")
+    f.write('# Loading the Graceful Graph Package\n')
+    f.write("load('./graceful_graph_package.sage')\n\n")
+    f.write('# Initialization of the size parameter\n')
+    f.write('sz='+str(sz)+'\n\n')
+    f.write('# Initialization of the symbolic variables\n')
+    f.write("A=HM(sz,sz,'a'); Y=var_list('y',sz); K=var_list('k',sz)\n\n")
+    f.write('# Initialization of the Permutations\n')
+    f.write('P=Permutations(sz)\n\n')
+    f.write('# Computing the sum over gracefully labeled functional directed graphs\n')
+    f.write('f=0 \n\n')
+    f.write('# Main loop\n')
+    f.write('for t in DecreasingFunctionList(sz):\n')
+    # variable storing the indentation spaces
+    sp = '    '
+    for i in range(sz):
+        tmpString='for K['+str(i)+'] in rg(2):\n'
+        f.write(sp+tmpString)
+        sp=sp+'    '
+    f.write(sp+'if prod(Y[j-t[j][1]]^K[j]*Y[sz-1-t[j][1]]^(1-K[j]) for j in rg(sz))==prod(Y):\n')
+    sp=sp+'    '
+    f.write(sp+'for p in P:\n')
+    sp=sp+'    '
+    f.write(sp+'if prod(p[k-t[k][1]]*K[k]+p[sz-1-t[k][1]]*(1-K[k]) >= p[k-t[k][1]]*(1-K[k])+p[sz-1-t[k][1]]*K[k] for k in rg(sz)):\n')
+    sp=sp+'    '
+    f.write(sp+'f=f+prod(A[p[sz-1-t[i][1]]-1,p[i-t[i][1]]-1]^(1-K[i])*A[p[i-t[i][1]]-1,p[sz-1-t[i][1]]-1]^K[i] for i in rg(sz))/2\n\n')
+    f.write('# Initialization of the list of graphs\n')
+    f.write('LtG = [Monomial2TII(mnm, A.list(), sz) for mnm in f.operands()]\n\n')
+    f.write('# Plotting the trees \n')
+    f.write('for g in LtG:\n')
+    f.write('    T2DiGraphII(g,sz).plot().show()\n')
+    # Closing the file
+    f.close()
+
+def generate_script_gracefully_labeled_functional_digraphs(sz):
+    """
+    The produces an implementation an optimal sage script for
+    displaying and listing gracefully labeled functional directed graphs
+    on sz vertices.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: from subprocess import call
+        sage: call("touch fast_listing_of_graceful_graph_on_10_vertices.sage", shell=True)
+        0
+        sage: call("rm fast_listing_of_graceful_graph_on_10_vertices.sage", shell=True)
+        0
+        sage: generate_script_gracefully_labeled_functional_digraphs(4)
+        sage: call("ls fast_listing_of_graceful_graphs_on_4_vertices.sage", shell=True)
+        fast_listing_of_graceful_trees_on_4_vertices.sage
+        0
+        sage: load('fast_listing_of_graceful_graphs_on_4_vertices.sage')
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives 
+        sage: f
+        a00*a10*a20*a30 + a01*a11*a20*a30 + a00*a12*a20*a30 + a02*a11*a21*a30 + a00*a13*a21*a30 + a02*a10*a22*a30 + a02*a12*a22*a30 + a01*a13*a22*a30 + a02*a11*a23*a30 + a00*a13*a23*a30 + a03*a11*a21*a31 + a03*a10*a22*a31 + a03*a12*a22*a31 + a03*a11*a23*a31 + a03*a11*a20*a32 + a03*a13*a22*a32 + a03*a10*a20*a33 + a03*a12*a20*a33 + a03*a13*a21*a33 + a03*a13*a23*a33
+
+ 
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Creating the string corresponding to the file name
+    filename = 'fast_listing_of_graceful_graphs_on_'+str(sz)+'_vertices.sage'
+    # Opening the file
+    f = open(filename,'w')
+    f.write('# Loading the Hypermatrix Package\n')
+    f.write("load('./Hypermatrix_Algebra_tst.sage')\n\n")
+    f.write('# Loading the Graceful Graph Package\n')
+    f.write("load('./graceful_graph_package.sage')\n\n")
+    f.write('# Initialization of the size parameter\n')
+    f.write('sz='+str(sz)+'\n\n')
+    f.write('# Initialization of the symbolic variables\n')
+    f.write("A=HM(sz,sz,'a'); Y=var_list('y',sz); K=var_list('k',sz)\n\n")
+    f.write('# Initialization of the Permutations\n')
+    f.write('P=Permutations(sz)\n\n')
+    f.write('# Computing the sum over gracefully labeled functional directed graphs\n')
+    f.write('f=0 \n\n')
+    f.write('# Main loop\n')
+    f.write('for t in NonIncreasingFunctionList(sz)[0]:\n')
+    # variable storing the indentation spaces
+    sp = '    '
+    for i in range(sz):
+        tmpString='for K['+str(i)+'] in rg(2):\n'
+        f.write(sp+tmpString)
+        sp=sp+'    '
+    f.write(sp+'if prod(Y[j-t[j][1]]^K[j]*Y[sz-1-t[j][1]]^(1-K[j]) for j in rg(sz))==prod(Y):\n')
+    sp=sp+'    '
+    f.write(sp+'f=f+prod(A[sz-1-t[i][1], i-t[i][1]]^(1-K[i])*A[i-t[i][1], sz-1-t[i][1]]^K[i] for i in rg(sz))/2\n\n')
+    f.write('# Initialization of the list of graphs\n')
+    f.write('LtG = [Monomial2TII(mnm, A.list(), sz) for mnm in f.operands()]\n\n')
+    f.write('# Plotting the graphs \n')
+    f.write('for g in LtG:\n')
+    f.write('    T2DiGraphII(g,sz).plot().show()\n')
+    # Closing the file
+    f.close()
+
+def generate_script_gracefully_labeled_functional_digraphsII(sz):
+    """
+    The produces an implementation an optimal sage script for
+    displaying and listing gracefully labeled functional directed graphs
+    on sz vertices. The difference with the implementation above is that
+    we start from trees.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: from subprocess import call
+        sage: call("touch fast_listing_of_graceful_graph_on_10_vertices.sage", shell=True)
+        0
+        sage: call("rm fast_listing_of_graceful_graph_on_10_vertices.sage", shell=True)
+        0
+        sage: generate_script_gracefully_labeled_functional_digraphsII(4)
+        sage: call("ls fast_listing_of_graceful_graphs_on_4_vertices.sage", shell=True)
+        fast_listing_of_graceful_trees_on_4_vertices.sage
+        0
+        sage: load('fast_listing_of_graceful_graphs_on_4_vertices.sage')
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        Launched png viewer for Graphics object consisting of 12 graphics primitives
+        sage: f
+        a00*a10*a20*a30 + a00*a12*a20*a30 + a00*a13*a21*a30 + a00*a13*a23*a30
+ 
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Creating the string corresponding to the file name
+    filename = 'fast_listing_of_graceful_graphs_on_'+str(sz)+'_vertices.sage'
+    # Opening the file
+    f = open(filename,'w')
+    f.write('# Loading the Hypermatrix Package\n')
+    f.write("load('./Hypermatrix_Algebra_tst.sage')\n\n")
+    f.write('# Loading the Graceful Graph Package\n')
+    f.write("load('./graceful_graph_package.sage')\n\n")
+    f.write('# Initialization of the size parameter\n')
+    f.write('sz='+str(sz)+'\n\n')
+    f.write('# Initialization of the symbolic variables\n')
+    f.write("A=HM(sz,sz,'a'); Y=var_list('y',sz); K=var_list('k',sz)\n\n")
+    f.write('# Initialization of the Permutations\n')
+    f.write('P=Permutations(sz)\n\n')
+    f.write('# Computing the sum over gracefully labeled functional directed graphs\n')
+    f.write('f=0 \n\n')
+    f.write('# Main loop\n')
+    f.write('for t in IncreasingFunctionList(sz):\n')
+    # variable storing the indentation spaces
+    sp = '    '
+    for i in range(sz-1):
+        tmpString='for K['+str(i)+'] in rg(2):\n'
+        f.write(sp+tmpString)
+        sp=sp+'    '
+    f.write(sp+'K[sz-1]=0\n')
+    f.write(sp+'if prod(Y[j-t[j][1]]^K[j]*Y[sz-1-t[j][1]]^(1-K[j]) for j in rg(sz))==prod(Y):\n')
+    sp=sp+'    '
+    f.write(sp+'f=f+prod(A[sz-1-t[i][1], i-t[i][1]]^(1-K[i])*A[i-t[i][1], sz-1-t[i][1]]^K[i] for i in rg(sz))\n\n')
+    f.write('# Initialization of the list of graphs\n')
+    f.write('LtG = [Monomial2TII(mnm, A.list(), sz) for mnm in f.operands()]\n\n')
+    f.write('# Plotting the graphs \n')
+    f.write('for g in LtG:\n')
+    f.write('    T2DiGraphII(g,sz).plot().show()\n')
+    # Closing the file
+    f.close()
+
 def RandomGraphSignedPermutationClasses(n):
     """
     Returns a random graph selected uniformly among the
@@ -6033,9 +6334,9 @@ def FindTreeTupleComponents(T):
 
 def graph_function_orbit(T):
     """
-    Obtain the equivalence classes of non isomorphic function
-    associated with a graceful labeling
-    
+    Obtain the set of non isomorphic functional
+    directed graphs resulting from switching the
+    sink node.
 
 
     EXAMPLES:
@@ -7445,7 +7746,7 @@ def LambdaHM(A):
                 M[i,j] = A[j-(A.n(0)-1)+i-1, i]
     return M
 
-def ListingGracefulTrees(n):
+def ListingGracefulTrees(sz):
     """
     Listing gracefully labeled trees via the consruction of Robin W. Whitty.
 
@@ -7461,7 +7762,7 @@ def ListingGracefulTrees(n):
     AUTHORS:
     - Edinah K. Gnang
     """
-    return expand(det((PhiMatrix(n)-LambdaMatrix(n))[1:n,1:n]))
+    return expand(det((PhiMatrix(sz)-LambdaMatrix(sz))[1:sz,1:sz]))
 
 def ListingGracefulGraphs(n):
     """
@@ -7481,4 +7782,88 @@ def ListingGracefulGraphs(n):
     """
     return PermComp((PhiMatrix(n)+LambdaMatrix(n))[1:n,1:n])
 
+def GrL(T):
+    """
+    Outputs the list of graceful relabling of the input functional
+    directed graph T specified in tuple description.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=5; GrL([(i,0) for i in rg(sz)])
+        [[(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],  [(0, 4), (1, 4), (2, 4), (3, 4), (4, 4)]]
+ 
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initializing the number of vertices
+    sz = len(T)
+    # Shifting the vertex indices to make the sage graph theory package happy
+    tp = [(1+T[i][0], 1+T[i][1]) for i in rg(sz)]
+    # Initializing the permutations
+    P = Permutations(sz); S = SymmetricGroup(sz)
+    # Initializing the graph
+    grph = T2DiGraphII(tp,sz+1)
+    # Initializing the automorphism group
+    AutGrp = grph.automorphism_group()
+    # Initializing representatives of Left coset as strings
+    Lcst = [CstL[0] for CstL in S.cosets(AutGrp)]
+    # Initializing the output list
+    Lf = []
+    # Looping through the coset representatives
+    for p in Lcst:
+        if Set([abs(p.dict()[tp[i][1]] - p.dict()[tp[i][0]]) for i in rg(sz)]) == Set(rg(sz)):
+            Lf.append([(p.dict()[tp[i][0]]-1, p.dict()[tp[i][1]]-1) for i in rg(sz)])
+    return Lf
+
+def GrSp(T):
+    """
+    Outputs the list of triples sigma, sigma inverse, gamma, sign.
+    directed graph T specified in tuple description.
+    The function takes only one permutation per cosets
+    of the automorphism.
+
+
+    EXAMPLES:
+
+    ::
+
+        sage: sz=5; GrSp([(i,1) for i in rg(sz)])
+        [[[(0, 0), (1, 4), (2, 1), (3, 2), (4, 3)],
+          [(0, 0), (1, 2), (2, 3), (3, 4), (4, 1)],
+          [(0, 4), (1, 0), (2, 3), (3, 2), (4, 1)],
+          [(0, -1), (1, 0), (2, -1), (3, -1), (4, -1)]],
+         [[(0, 1), (1, 0), (2, 2), (3, 3), (4, 4)],
+          [(0, 1), (1, 0), (2, 2), (3, 3), (4, 4)],
+          [(0, 1), (1, 0), (2, 2), (3, 3), (4, 4)],
+          [(0, 1), (1, 0), (2, 1), (3, 1), (4, 1)]]]
+ 
+
+    AUTHORS:
+    - Edinah K. Gnang
+    """
+    # Initializing the number of vertices
+    sz = len(T)
+    # Shifting the vertex indices to make the sage graph theory package happy
+    tp = [(1+T[i][0], 1+T[i][1]) for i in rg(sz)]
+    # Initializing the permutations
+    P = Permutations(sz); S = SymmetricGroup(sz)
+    # Initializing the graph
+    grph = T2DiGraphII(tp, sz+1)
+    # Initializing the automorphism group
+    AutGrp = grph.automorphism_group()
+    # Initializing representatives of Left coset as strings
+    Lcst = [CstL[0] for CstL in S.cosets(AutGrp)]
+    # Initializing the output list
+    Lf = []
+    # Looping through the coset representatives
+    for p in Lcst:
+        if Set([abs(p.dict()[tp[i][1]] - p.dict()[tp[i][0]]) for i in rg(sz)]) == Set(rg(sz)):
+            # Initialization of the inverse
+            q = p.inverse()
+            Lf.append([[(i, p.dict()[i+1]-1) for i in rg(sz)], [(i, q.dict()[i+1]-1) for i in rg(sz)], [(i, abs(p.dict()[tp[i][0]] - p.dict()[tp[i][1]])) for i in rg(sz)], [(i, sign(p.dict()[tp[i][0]] - p.dict()[tp[i][1]])) for i in rg(sz)]])
+    return Lf
 
