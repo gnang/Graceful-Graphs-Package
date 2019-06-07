@@ -6653,14 +6653,14 @@ def Permutation2pseudoTuple(M):
     while M.n(0) > 1:
         for i in rg(M.n(0)):
             if M[0,i] == 1:
-                M=SecondOrderSlicer(SecondOrderSlicer(M, [j  for j in rg(1,M.n(0))], 'row'), [k for k in rg(M.n(1)) if k != i], 'col')
+                M=M.slice([k for k in rg(M.n(1)) if k != i], 'col').slice([j  for j in rg(1,M.n(0))], 'row')
                 if edgw == 0:
                     tp.append([(i, i+edgw)])
                 else:
                     tp.append([(i, i+edgw), (i+edgw, i)])
                 edgw=edgw+1
                 break
-    tp.append([(edgw,0), (0,edgw)])
+    tp.append([(0, edgw), (edgw, 0)])
     return tp
 
 def Tuple2pseudoTuple(tp):
@@ -6752,6 +6752,49 @@ def pseudoTuple2Graph(T):
     # Initialization of the identity matrix
     Id=identity_matrix(len(T))
     return Graph(sum(sum(Id[:,t[0]] * Id[t[1],:] for t in Lt) for Lt in T))
+
+def Permutation2InsertionPattern(T):
+    """
+    Returns list of the list of insertion patterns associated
+    with the bijection from permutation to gracefully labeled
+    undirected graph having a loop edge (of weight 0). The 
+    input is tuple descrition of a permutation. The function 
+    checks to see that it is indeed a permutation.
+    The output is a list of insertion patterns reflecting the
+    edge choice made in deacreasin order of subtractive edge
+    weight magnitudes.
+
+
+    EXAMPLES:
+    ::
+        sage: Permutation2InsertionPattern([(0, 0), (1, 1), (2, 2)])
+        [0, 0, 0]
+        sage: Permutation2InsertionPattern([(0, 2), (1, 1), (2, 1)])
+        [2, 2, 2]
+
+
+    AUTHORS:
+
+    - Edinah K. Gnang
+    """
+    # Initialization of the size and order parameters
+    sz=len(T); od=2
+    # Initialization of the identity matrix
+    Id=HM(od, sz, 'kronecker')
+    P=sum(Id.slice([T[i][0]],'col')*Id.slice([T[i][1]],'row') for i in rg(sz))
+    if (P*P.transpose()-Id).is_zero():
+        # Initialization of the list of options for each subtractive edge weights
+        Lopt=[[(i,i) for i in rg(sz)]]+[[] for i in rg(sz-1)]
+        for i in rg(1,sz):
+            for j in rg(i):
+                Lopt[abs(i-j)].append((j,i))
+        # Initialization of the list of dictionaries for edge weight options
+        LDct=[{Lopt[i][j] : j for j in rg(len(Lopt[i]))} for i in rg(sz)]
+        # Converting the permutation matrix into a Pseudotuple list
+        pT=Permutation2pseudoTuple(P)
+        return [LDct[pT[sz-1-i][0][1]-pT[sz-1-i][0][0]][(pT[sz-1-i][0][0],pT[sz-1-i][0][1])] for i in rg(sz)]
+    else:
+        raise ValueError, "The input must be a spanning union of cycles as input."
 
 def ConjugateGraphTerm(tp, p, A):
     """
